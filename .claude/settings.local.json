@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "PowerShell(gh auth *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" auth status)",
+      "PowerShell(Get-ChildItem *)"
+    ]
+  }
+}
