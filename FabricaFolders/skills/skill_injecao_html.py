@@ -13,7 +13,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.regras_globais import CLASSES_BOX, IDENTIDADE_VISUAL, CONTATOS_DPE
 
 _TEMPLATE_PATH = Path(__file__).parent.parent / "templates" / "template_base.html"
-_LOGO_PATH = Path(__file__).parent.parent / "templates" / "assets" / "logo_dpe_b64.txt"
 
 _SYSTEM_FORMATADOR = f"""Você é um desenvolvedor front-end especializado em HTML para impressão.
 Converte JSON de conteúdo em fragmentos HTML usando as classes CSS do sistema de design DPESP.
@@ -94,12 +93,11 @@ def gerar_fragmentos_html(conteudo: dict, client: anthropic.Anthropic) -> dict:
     return json.loads(raw)
 
 
-def montar_html_final(fragmentos: dict, logo_b64: str) -> str:
+def montar_html_final(fragmentos: dict) -> str:
     template = _TEMPLATE_PATH.read_text(encoding="utf-8")
 
     titulo = fragmentos.get("titulo", "Folder Informativo")
     html = template.replace("{{TITULO}}", titulo)
-    html = html.replace("{{LOGO_B64}}", logo_b64.strip())
 
     for i in range(1, 7):
         chave = f"painel_{i}"
