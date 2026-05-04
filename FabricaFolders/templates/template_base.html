@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Folder – {{TITULO}} – Defensoria Pública</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'dpe':    '#009632',
+          'dpe-dk': '#007828',
+          'dpe-bg': '#f2faf5',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', Arial, sans-serif;
+    background: #d1d5db;
+    margin: 0; padding: 24px 0;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 28px;
+  }
+
+  .a4-landscape {
+    width: 297mm; height: 210mm;
+    background: white;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .panel {
+    padding: 7mm 8.5mm;
+    display: flex; flex-direction: column;
+    border-right: 1px dashed #c8e6d0;
+    overflow: hidden;
+  }
+  .panel:last-child { border-right: none; }
+
+  .panel-cover {
+    padding: 0;
+    display: flex; flex-direction: column;
+    background: #009632;
+  }
+
+  .cover-logo-bar {
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    padding: 4mm 7mm;
+    border-bottom: 3.5px solid #009632;
+  }
+  .cover-logo-bar img {
+    height: 30mm;
+    width: auto; display: block;
+  }
+
+  .cover-body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 5mm 9mm; text-align: center; color: white;
+  }
+
+  .cover-footer {
+    background: rgba(0,0,0,0.18);
+    padding: 4mm 9mm;
+    text-align: center;
+    color: white;
+  }
+
+  .sec-title {
+    font-weight: 700;
+    color: #009632;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #009632;
+    padding-bottom: 3px;
+    margin-bottom: 9px;
+    line-height: 1.2;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #009632; color: white; border-radius: 50%;
+    width: 19px; height: 19px; font-size: 10.5px; font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .box {
+    border-radius: 3px;
+    padding: 6px 9px;
+    margin-bottom: 7px;
+    line-height: 1.4;
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+  .box-gl  { background: #f2faf5; border-left: 3px solid #009632; }
+  .box-gm  { background: #e6f5ed; border-left: 3px solid #009632; }
+  .box-amb { background: #fffbf0; border-left: 3px solid #d97706; }
+  .box-red { background: #fff5f5; border-left: 3px solid #dc2626; }
+  .box-gy  { background: #f5f5f5; border-left: 3px solid #888; }
+  .box-dk  { background: #009632; color: white; border-radius: 4px; padding: 7px 9px; }
+
+  .bt  { font-weight: 700; font-size: 13px; color: #006622; margin-bottom: 2px; }
+  .bta { color: #92400e; }
+  .btr { color: #991b1b; }
+  .btw { color: white; }
+
+  .body { font-size: 13.5px; color: #1a1a1a; line-height: 1.4; }
+  .sm   { font-size: 12.5px; }
+  .xs   { font-size: 11.5px; }
+  .divider { border-top: 1.5px solid #009632; margin: 7px 0; }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    body { background: white; padding: 0; gap: 0; align-items: flex-start; }
+    .a4-landscape { width: 297mm; height: 210mm; box-shadow: none; page-break-after: always; }
+    .a4-landscape:last-child { page-break-after: avoid; }
+    .panel { border-right: none; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<button onclick="window.print()"
+  class="no-print font-bold py-2.5 px-6 rounded-full shadow-lg fixed bottom-5 right-5 z-50"
+  style="background:#009632; color:white; font-family:'Source Sans 3',sans-serif; font-size:14px;">
+  Imprimir Folder
+</button>
+
+<!-- ═══════════════════════════════════════════
+     PÁGINA 1 – EXTERIOR
+════════════════════════════════════════════ -->
+<div class="a4-landscape">
+
+  <!-- PAINEL 1 -->
+  <div class="panel" style="background:#f8fdf9;">
+    {{PAINEL_1_CONTENT}}
+  </div>
+
+  <!-- PAINEL 2 -->
+  <div class="panel bg-white">
+    {{PAINEL_2_CONTENT}}
+  </div>
+
+  <!-- PAINEL 3 – CAPA -->
+  <div class="panel-cover">
+    <div class="cover-logo-bar">
+      <img src="data:image/jpeg;base64,{{LOGO_B64}}" alt="Defensoria Pública do Estado de São Paulo">
+    </div>
+    {{PAINEL_3_CONTENT}}
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PÁGINA 2 – INTERIOR
+════════════════════════════════════════════ -->
+<div class="a4-landscape">
+
+  <!-- PAINEL 4 -->
+  <div class="panel bg-white">
+    {{PAINEL_4_CONTENT}}
+  </div>
+
+  <!-- PAINEL 5 -->
+  <div class="panel bg-white">
+    {{PAINEL_5_CONTENT}}
+  </div>
+
+  <!-- PAINEL 6 -->
+  <div class="panel bg-white">
+    {{PAINEL_6_CONTENT}}
+  </div>
+
+</div>
+
+</body>
+</html>
