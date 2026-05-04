@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Folder – JEC e JEFAZ – Defensoria Pública</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'dpe':    '#009632',
+          'dpe-dk': '#007828',
+          'dpe-bg': '#f2faf5',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Sans 3', Arial, sans-serif;
+    background: #d1d5db;
+    margin: 0; padding: 24px 0;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 28px;
+  }
+
+  .a4-landscape {
+    width: 297mm; height: 210mm;
+    background: white;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .panel {
+    padding: 7mm 8.5mm;
+    display: flex; flex-direction: column;
+    border-right: 1px dashed #c8e6d0;
+    overflow: hidden;
+  }
+  .panel:last-child { border-right: none; }
+
+  .panel-cover {
+    padding: 0;
+    display: flex; flex-direction: column;
+    background: #009632;
+  }
+
+  .cover-logo-bar {
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    padding: 4mm 7mm;
+    border-bottom: 3.5px solid #009632;
+  }
+  .cover-logo-bar img {
+    height: 30mm;
+    width: auto; display: block;
+  }
+
+  .cover-body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 5mm 9mm; text-align: center; color: white;
+  }
+
+  .cover-footer {
+    background: rgba(0,0,0,0.18);
+    padding: 4mm 9mm;
+    text-align: center;
+    color: white;
+  }
+
+  .sec-title {
+    font-weight: 700;
+    color: #009632;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #009632;
+    padding-bottom: 3px;
+    margin-bottom: 9px;
+    line-height: 1.2;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #009632; color: white; border-radius: 50%;
+    width: 19px; height: 19px; font-size: 10.5px; font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .box {
+    border-radius: 3px;
+    padding: 6px 9px;
+    margin-bottom: 7px;
+    line-height: 1.4;
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+  .box-gl  { background: #f2faf5; border-left: 3px solid #009632; }
+  .box-gm  { background: #e6f5ed; border-left: 3px solid #009632; }
+  .box-amb { background: #fffbf0; border-left: 3px solid #d97706; }
+  .box-red { background: #fff5f5; border-left: 3px solid #dc2626; }
+  .box-gy  { background: #f5f5f5; border-left: 3px solid #888; }
+  .box-dk  { background: #009632; color: white; border-radius: 4px; padding: 7px 9px; }
+
+  .bt  { font-weight: 700; font-size: 13px; color: #006622; margin-bottom: 2px; }
+  .bta { color: #92400e; }
+  .btr { color: #991b1b; }
+  .btw { color: white; }
+
+  .body { font-size: 13.5px; color: #1a1a1a; line-height: 1.4; }
+  .sm   { font-size: 12.5px; }
+  .xs   { font-size: 11.5px; }
+  .divider { border-top: 1.5px solid #009632; margin: 7px 0; }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    body { background: white; padding: 0; gap: 0; align-items: flex-start; }
+    .a4-landscape { width: 297mm; height: 210mm; box-shadow: none; page-break-after: always; }
+    .a4-landscape:last-child { page-break-after: avoid; }
+    .panel { border-right: none; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<button onclick="window.print()"
+  class="no-print font-bold py-2.5 px-6 rounded-full shadow-lg fixed bottom-5 right-5 z-50"
+  style="background:#009632; color:white; font-family:'Source Sans 3',sans-serif; font-size:14px;">
+  Imprimir Folder
+</button>
+
+<!-- ═══════════════════════════════════════════
+     PÁGINA 1 – EXTERIOR
+════════════════════════════════════════════ -->
+<div class="a4-landscape">
+
+  <!-- PAINEL 1 -->
+  <div class="panel" style="background:#f8fdf9;">
+    
+<h3 class="sec-title">O que são os Juizados Especiais?</h3>
+<p class="body mb-2" style="text-align:justify;">
+  Os Juizados Especiais são órgãos da Justiça Estadual criados para resolver conflitos de forma
+  <strong>rápida, simples e gratuita</strong> — sem burocracia e sem custas processuais na 1.ª instância.
+</p>
+<div class="box box-gl">
+  <p class="bt">JEC — Juizado Especial Cível</p>
+  <p class="sm">Conflitos entre <strong>particulares</strong> (pessoas físicas e empresas privadas).</p>
+  <p class="xs mt-1" style="color:#444;">Valor: até <strong>20 salários mínimos</strong>. Advogado: <strong>facultativo</strong>.</p>
+</div>
+<div class="box box-gm">
+  <p class="bt">JEFAZ — Juizado Especial da Fazenda Pública</p>
+  <p class="sm">Conflitos contra o <strong>Poder Público estadual ou municipal</strong> (Estado, municípios, autarquias).</p>
+  <p class="xs mt-1" style="color:#444;">Valor: até <strong>60 salários mínimos</strong>. Advogado: <strong>obrigatório</strong> — a DPE pode representar você gratuitamente.</p>
+</div>
+<div class="mt-auto box-dk text-center">
+  <p class="font-bold mb-0.5" style="font-size:11px; text-transform:uppercase; letter-spacing:0.04em; opacity:0.85;">Precisa de orientação ou advogado? Procure a DPE:</p>
+  <p class="xs">Rua Alice Além Saad, 1.256 – Nova Ribeirânia</p>
+  <p class="xs">(16) 2111-5850 &middot; 0800 773 4340</p>
+  <p class="xs mt-1" style="opacity:.85;">triagem.ribpreto@defensoria.sp.def.br</p>
+</div>
+
+  </div>
+
+  <!-- PAINEL 2 -->
+  <div class="panel bg-white">
+    
+<h3 class="sec-title">Como funciona o processo?</h3>
+<div class="space-y-2 mb-1">
+  <div class="flex gap-2">
+    <span class="badge mt-0.5">1</span>
+    <div class="sm"><p class="font-bold" style="color:#006622;">Ajuizamento</p>
+    <p>Compareça ao Juizado com seus documentos e descreva o conflito. No JEC, a petição pode ser feita pessoalmente, sem advogado.</p></div>
+  </div>
+  <div class="flex gap-2">
+    <span class="badge mt-0.5">2</span>
+    <div class="sm"><p class="font-bold" style="color:#006622;">Citação</p>
+    <p>A parte contrária é notificada para comparecer à audiência designada.</p></div>
+  </div>
+  <div class="flex gap-2">
+    <span class="badge mt-0.5">3</span>
+    <div class="sm"><p class="font-bold" style="color:#006622;">Audiência de Conciliação</p>
+    <p>Tentativa de acordo conduzida por conciliador. Havendo acordo, o processo encerra.</p></div>
+  </div>
+  <div class="flex gap-2">
+    <span class="badge mt-0.5">4</span>
+    <div class="sm"><p class="font-bold" style="color:#006622;">Instrução e Julgamento</p>
+    <p>Sem acordo, o Juiz ouve as partes e testemunhas e decide a causa.</p></div>
+  </div>
+  <div class="flex gap-2">
+    <span class="badge mt-0.5">5</span>
+    <div class="sm"><p class="font-bold" style="color:#006622;">Sentença</p>
+    <p>Decisão do Juiz. Se o vencido não cumprir, a parte vencedora pode requerer a execução.</p></div>
+  </div>
+</div>
+<div class="divider"></div>
+<div class="box box-amb">
+  <p class="bt bta">Pontualidade é essencial</p>
+  <p class="sm">A falta injustificada pode gerar <strong>revelia</strong>: os fatos alegados contra você serão presumidos verdadeiros pelo Juiz. A presença de advogado não supre a ausência da parte.</p>
+</div>
+
+  </div>
+
+  <!-- PAINEL 3 – CAPA -->
+  <div class="panel-cover">
+    <div class="cover-logo-bar">
+      <img src="data:image/jpeg;base64,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VHckeveqsxHBrZaOQ8ozCO6+u4Xt1lx9DrqVJT5YI0kDfr8dkn41K6ApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAKUpQClKUApSlAf/2Q==" alt="Defensoria Pública do Estado de São Paulo">
+    </div>
+    
+<div class="cover-body">
+  <p style="font-size:11px; text-transform:uppercase; letter-spacing:0.12em; opacity:0.75; margin-bottom:6mm;">Defensoria Pública do Estado de São Paulo</p>
+  <p style="font-size:22pt; font-weight:700; line-height:1.1; margin-bottom:3mm;">JEC e JEFAZ</p>
+  <p style="font-size:13pt; font-weight:600; line-height:1.3; margin-bottom:5mm;">Juizados Especiais<br>Cível e da Fazenda Pública</p>
+  <div style="width:35mm; height:2px; background:rgba(255,255,255,0.5); margin:0 auto 5mm;"></div>
+  <p style="font-size:11.5pt; font-style:italic; opacity:0.92;">Acesso à Justiça de forma rápida, simples e gratuita para fazer valer seus direitos.</p>
+</div>
+<div class="cover-footer">
+  <p style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;">Unidade Ribeirão Preto</p>
+  <p style="font-size:10px;">Rua Alice Além Saad, 1.256 – Nova Ribeirânia</p>
+  <p style="font-size:10px;">(16) 2111-5850 &middot; 0800 773 4340 (ligação gratuita)</p>
+  <p style="font-size:9.5px; opacity:.85;">triagem.ribpreto@defensoria.sp.def.br</p>
+</div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PÁGINA 2 – INTERIOR
+════════════════════════════════════════════ -->
+<div class="a4-landscape">
+
+  <!-- PAINEL 4 -->
+  <div class="panel bg-white">
+    
+<h3 class="sec-title">Quando usar cada Juizado?</h3>
+<div class="box box-gl">
+  <p class="bt">JEC — use quando o conflito envolver:</p>
+  <ul class="xs mt-1" style="color:#1a1a1a; padding-left:10px; list-style:disc;">
+    <li>Dívidas e cobranças entre particulares</li>
+    <li>Problema de consumo (produto com defeito, serviço não prestado)</li>
+    <li>Danos causados por acidente de trânsito</li>
+    <li>Conflitos de vizinhança ou condominiais</li>
+    <li>Locação residencial (valor até 20 SM)</li>
+  </ul>
+  <p class="xs mt-1" style="color:#444;"><strong>Exemplo:</strong> empresa cobrou valor indevido no cartão e não estornou; loja não entregou produto comprado.</p>
+</div>
+<div class="box box-gm">
+  <p class="bt">JEFAZ — use quando o conflito envolver:</p>
+  <ul class="xs mt-1" style="color:#1a1a1a; padding-left:10px; list-style:disc;">
+    <li>Cobrança indevida de IPTU, IPVA ou taxa municipal</li>
+    <li>Indenização por dano causado por agente público</li>
+    <li>Revisão de multa de trânsito aplicada pelo Estado ou município</li>
+    <li>Servidor público contra seu órgão (até 60 SM)</li>
+    <li>Negativa ilegal de licença ou alvará pela prefeitura</li>
+  </ul>
+  <p class="xs mt-1" style="color:#444;"><strong>Exemplo:</strong> prefeitura cobrou IPTU de imóvel isento; agente público danificou veículo.</p>
+</div>
+<div class="box box-amb">
+  <p class="bt bta">Não é caso de Juizado Especial Estadual quando:</p>
+  <ul class="xs mt-1" style="color:#1a1a1a; padding-left:10px; list-style:disc;">
+    <li>Conflito com órgão <strong>federal</strong> (INSS, Receita, Caixa) — vai ao JEF</li>
+    <li>Mandado de Segurança, desapropriação ou ação popular</li>
+    <li>Valor acima do limite (JEC &gt; 20 SM &nbsp;/&nbsp; JEFAZ &gt; 60 SM)</li>
+  </ul>
+</div>
+
+  </div>
+
+  <!-- PAINEL 5 -->
+  <div class="panel bg-white">
+    
+<h3 class="sec-title">Documentos necessários</h3>
+<div class="box box-gy mb-1">
+  <ul class="xs" style="color:#1a1a1a; padding-left:10px; list-style:disc;">
+    <li>RG e CPF (originais e cópia)</li>
+    <li>Comprovante de residência atualizado</li>
+    <li>Documentos do caso: nota fiscal, contrato, foto, print, boleto, etc.</li>
+    <li>Nome, RG, CPF, endereço, telefone e e-mail de até 3 testemunhas (se houver)</li>
+  </ul>
+</div>
+<div class="divider"></div>
+<h3 class="sec-title" style="margin-top:5px;">Locais — JEC (Ribeirão Preto)</h3>
+<div class="box box-gl" style="margin-bottom:4px;">
+  <p class="xs font-bold" style="color:#006622;">Moura Lacerda</p>
+  <p class="xs">R. Capitão Salomão, 1384 – Campos Elíseos</p>
+  <p class="xs">(16) 2101-1180 / 2101-1185 / 2111-1846</p>
+  <p class="xs" style="color:#444;">13h–17h (dias úteis)</p>
+</div>
+<div class="box box-gl" style="margin-bottom:4px;">
+  <p class="xs font-bold" style="color:#006622;">UNIP</p>
+  <p class="xs">Av. Carlos Consoni, 10 – Bl. B – Jd. Canadá</p>
+  <p class="xs">(16) 3602-6768 &nbsp;|&nbsp; 13h–17h (dias úteis)</p>
+</div>
+<div class="box box-gl" style="margin-bottom:4px;">
+  <p class="xs font-bold" style="color:#006622;">Fórum</p>
+  <p class="xs">R. Alice Alem Saad, 1010 – Nova Ribeirânia</p>
+  <p class="xs">(16) 3238-8071 / 8072 &nbsp;|&nbsp; 13h–17h</p>
+  <p class="xs" style="color:#444;">Triagem: 13h–16h</p>
+</div>
+<div class="box box-gm">
+  <p class="xs font-bold" style="color:#006622;">JEFAZ — Fórum de Ribeirão Preto</p>
+  <p class="xs">R. Alice Alem Saad, 1010 – Nova Ribeirânia</p>
+  <p class="xs">(16) 3238-8071 &nbsp;|&nbsp; 9h–17h (dias úteis)</p>
+</div>
+
+  </div>
+
+  <!-- PAINEL 6 -->
+  <div class="panel bg-white">
+    
+<h3 class="sec-title">Importante saber</h3>
+<div class="box box-amb">
+  <p class="bt bta">Advogado no JEC (até 20 SM)</p>
+  <p class="sm">Facultativo para ambas as partes. Se a parte contrária tiver advogado, você tem direito a advogado nomeado pelo Estado para a Audiência de Instrução e Julgamento.</p>
+</div>
+<div class="box box-red">
+  <p class="bt btr">Advogado no JEFAZ — Obrigatório</p>
+  <p class="sm">Em qualquer valor. A <strong>Defensoria Pública</strong> pode representar você gratuitamente se não puder pagar advogado particular.</p>
+</div>
+<div class="box box-gy">
+  <p class="bt" style="color:#333;">Custas e Recurso</p>
+  <p class="sm">O processo é gratuito (sem custas na 1.ª instância). Recurso: 5% do valor (mínimo 5 UFESPs) + honorários se perder. Acordo homologado pelo Juiz não cabe recurso.</p>
+</div>
+<div class="box box-amb">
+  <p class="bt bta">Acordo antecipado</p>
+  <p class="sm">Se resolver o conflito antes da audiência, comunique ao Cartório do Juizado para liberar a data para outro processo.</p>
+</div>
+<div class="mt-auto box-dk text-center">
+  <p class="font-bold mb-0.5" style="font-size:11px; text-transform:uppercase; letter-spacing:0.04em; opacity:0.85;">Precisa de advogado ou orientação jurídica? Procure a DPE:</p>
+  <p class="xs">Rua Alice Além Saad, 1.256 – Nova Ribeirânia</p>
+  <p class="xs">(16) 2111-5850 &middot; 0800 773 4340 (gratuito)</p>
+  <p class="xs mt-1" style="opacity:.85;">triagem.ribpreto@defensoria.sp.def.br</p>
+  <p class="xs" style="opacity:.75;">www.defensoria.sp.def.br</p>
+</div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
