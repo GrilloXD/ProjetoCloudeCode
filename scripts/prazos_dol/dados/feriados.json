@@ -1,0 +1,11 @@
+{
+  "obs": "Dias sem expediente forense (nacionais, estaduais SP, municipais Ribeirão Preto e suspensões do TJSP). O recesso de 20/12 a 20/01 é aplicado automaticamente pelo script. 28/10 (Dia do Servidor) fica fora por segurança: se o TJSP suspender o expediente, acrescente aqui.",
+  "feriados": [
+    "01/01/2026", "16/02/2026", "17/02/2026", "03/04/2026", "21/04/2026", "01/05/2026",
+    "04/06/2026", "19/06/2026", "09/07/2026", "07/09/2026", "12/10/2026", "02/11/2026",
+    "15/11/2026", "20/11/2026", "25/12/2026",
+    "01/01/2027", "08/02/2027", "09/02/2027", "26/03/2027", "21/04/2027", "01/05/2027",
+    "27/05/2027", "19/06/2027", "09/07/2027", "07/09/2027", "12/10/2027", "02/11/2027",
+    "15/11/2027", "20/11/2027", "25/12/2027"
+  ]
+}
