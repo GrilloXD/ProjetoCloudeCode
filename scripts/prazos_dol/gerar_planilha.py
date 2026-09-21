@@ -388,39 +388,68 @@ def aba_resumo(wb, dados, linhas, hoje, notas):
             start_type="num", start_value=0, end_type="max", color="70AD47", showValue=True))
     ws.freeze_panes = f"A{LINHA_CAB + 1}"
 
-    grafico(wb, ws, linhas, hoje, fim_tabela + 2)
     return contagem
 
 
-def grafico(wb, ws, linhas, hoje, linha):
+def aba_grafico(wb, linhas, hoje):
     por_proc = {}
     for l in linhas:
         if l["venc"]:
             por_proc.setdefault(l["p"]["processo"], []).append(l)
     itens = []
     for grupo in por_proc.values():
-        provs = [uteis_entre(hoje, g["prov"]) for g in grupo if g["prov"]]
-        nome = nome_curto(grupo[0]["p"])
-        if len(grupo) > 1:
-            nome += f" ({len(grupo)} providências)"
-        if not provs:
-            nome += " (providência sem data)"
-        rec = max(0, uteis_entre(hoje, min(g["rec_fim"] for g in grupo)))
-        itens.append((nome, min(provs) if provs else None, rec, min(g["rest"] for g in grupo)))
-    itens.sort(key=lambda i: i[3])
+        provs = [g["prov"] for g in grupo if g["prov"]]
+        prov = min(provs) if provs else None
+        rec = min(g["rec_fim"] for g in grupo)
+        venc = min(g["venc"] for g in grupo)
+        nome = nome_curto(grupo[0]["p"]) + (f" ({len(grupo)} prov.)" if len(grupo) > 1 else "")
+        itens.append(dict(nome=nome, processo=grupo[0]["p"]["processo"], prov=prov, rec=rec, venc=venc,
+                          d_prov=uteis_entre(hoje, prov) if prov else None,
+                          d_rec=max(0, uteis_entre(hoje, rec)), d_venc=uteis_entre(hoje, venc)))
+    itens.sort(key=lambda i: i["venc"])
+
+    ws = wb.create_sheet("Gráfico", 1)
+    faixa_titulo(ws, "Quanto tempo falta em cada processo",
+                 f"Dias úteis contados a partir de {br(hoje)}.  Quanto menor a barra, mais urgente.", 8)
+    for col, w in zip("ABCDEFGH", [34, 26, 14, 10, 14, 10, 14, 10]):
+        ws.column_dimensions[col].width = w
+
+    celula(ws, 4, 1, "Legenda das cores", bold=True, cor=VERDE, borda=False)
+    legenda = [(3, "Prazo da providência", "prazo interno dado pela defensora", "FFC000", "000000"),
+               (5, "Limite recomendado", "5 dias úteis antes do fatal", "2F75B5", "FFFFFF"),
+               (7, "Prazo real (fatal)", "último dia no processo", VERDE, "FFFFFF")]
+    for col, rot, desc, bg, fg in legenda:
+        celula(ws, 4, col, rot, bold=True, cor=fg, fundo=bg, h="center")
+        celula(ws, 5, col, desc, cor="595959", size=9, h="center", borda=False)
+        ws.merge_cells(start_row=4, start_column=col, end_row=4, end_column=col + 1)
+        ws.merge_cells(start_row=5, start_column=col, end_row=5, end_column=col + 1)
+
+    cab = ["Assistido / repr. legal", "Processo", "Prazo da providência", "Dias úteis",
+           "Limite recomendado", "Dias úteis", "Prazo real (fatal)", "Dias úteis"]
+    cores_cab = [VERDE, VERDE, "BF9000", "BF9000", "2F75B5", "2F75B5", VERDE, VERDE]
+    for i, (h, bg) in enumerate(zip(cab, cores_cab), 1):
+        celula(ws, 7, i, h, bold=True, cor="FFFFFF", fundo=bg, h="center")
+    ws.row_dimensions[7].height = 30
+    for r, it in enumerate(itens, 8):
+        fundo = "F7F7F7" if r % 2 else None
+        vals = [it["nome"], it["processo"], br(it["prov"]) or "sem data", it["d_prov"] if it["prov"] else "-",
+                br(it["rec"]), it["d_rec"], br(it["venc"]), it["d_venc"]]
+        for i, v in enumerate(vals, 1):
+            celula(ws, r, i, v, bold=i in (1, 7, 8), fundo=fundo, h="left" if i <= 2 else "center", size=10)
+        if not it["prov"]:
+            ws.cell(row=r, column=3).font = Font(bold=True, color="C00000", size=10)
+        ws.row_dimensions[r].height = 22
+    fim = 7 + len(itens)
 
     wd = wb.create_sheet("_graficos")
-    wd.append(["Processo", "Até o prazo da providência", "Até o limite recomendado", "Até o prazo real (fatal)"])
+    wd.append(["Assistido", "Prazo da providência", "Limite recomendado", "Prazo real (fatal)"])
     for it in itens:
-        wd.append(list(it))
+        wd.append([it["nome"], it["d_prov"], it["d_rec"], it["d_venc"]])
     wd.sheet_state = "hidden"
-
-    celula(ws, linha, 1, "Quantos dias úteis faltam em cada processo", bold=True, cor=VERDE, size=12, borda=False)
-    celula(ws, linha + 1, 1, "Amarelo: prazo interno da providência.   Azul: limite recomendado (5 dias úteis "
-           "antes do fatal).   Verde: prazo real (fatal).   Quanto menor a barra, mais urgente.",
-           cor="595959", size=10, borda=False, wrap=False)
     if not itens:
+        celula(ws, 8, 1, "Nenhum processo com prazo em curso.", cor="808080", borda=False)
         return
+
     barra = BarChart()
     barra.type = "bar"
     barra.add_data(Reference(wd, min_col=2, max_col=4, min_row=1, max_row=len(itens) + 1), titles_from_data=True)
@@ -432,7 +461,7 @@ def grafico(wb, ws, linhas, hoje, linha):
     barra.y_axis.scaling.min = 0
     barra.y_axis.majorGridlines = None
     barra.y_axis.delete = True
-    barra.gapWidth = 60
+    barra.gapWidth = 70
     barra.overlap = 0
     for serie, cor in zip(barra.series, ["FFC000", "2F75B5", VERDE]):
         serie.graphicalProperties.solidFill = cor
@@ -444,9 +473,9 @@ def grafico(wb, ws, linhas, hoje, linha):
         serie.dLbls.showLegendKey = False
         serie.dLbls.showPercent = False
         serie.dLbls.position = "outEnd"
-    barra.height = 3.5 + 1.8 * len(itens)
-    barra.width = 24
-    ws.add_chart(barra, f"A{linha + 2}")
+    barra.height = 4 + 2.2 * len(itens)
+    barra.width = 30
+    ws.add_chart(barra, f"A{fim + 3}")
 
 
 def aba_detalhes(wb, linhas, notas):
@@ -571,6 +600,7 @@ def main():
 
     wb = Workbook()
     contagem = aba_resumo(wb, dados, linhas, hoje, notas)
+    aba_grafico(wb, linhas, hoje)
     aba_detalhes(wb, linhas, notas)
     aba_anotacoes_encerradas(wb, linhas, notas)
     aba_historico(wb, dados, contagem, len(linhas))
