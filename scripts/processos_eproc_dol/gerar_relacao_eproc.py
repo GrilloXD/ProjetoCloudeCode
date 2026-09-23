@@ -1,12 +1,9 @@
 """Gera a relação dos processos da 9ª DPE Ribeirão Preto que tramitam no eproc do TJSP.
 
 Uso: python gerar_relacao_eproc.py [caminho_saida.xlsx]
-Lê dados/processos.json, extraído do DOL em modo somente leitura: lista de processos ativos da 9ª Defensoria
-(com a marcação de sistema que o DOL mostra em cada linha) e as certidões de migração encontradas nas
-movimentações do e-SAJ de cada número. A planilha traz a relação eproc, o resumo com gráficos, a conferência
-de todos os PAs e a metodologia.
+Usa a base comum (base_dol.py): PAs ativos da 9ª no DOL, inclusive os que aparecem só como correlatos dentro de
+outro PA, com a marcação de sistema do DOL e as certidões de migração lidas nas movimentações do e-SAJ.
 """
-import json
 import sys
 from collections import Counter
 from datetime import datetime
@@ -19,8 +16,8 @@ from openpyxl.chart.series import DataPoint
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-BASE = Path(__file__).parent
-DADOS = BASE / "dados"
+from base_dol import RELEITURA, carregar, dt, foro_vara, representados
+
 SAIDA_PADRAO = Path.home() / "Downloads" / "3. Processos eproc 9ª DPE" / "Processos eproc 9ª DPE.xlsx"
 
 VERDE = "009632"
@@ -40,26 +37,6 @@ ESAJ_INCIDENTE = "e-SAJ; incidente vinculado foi para o eproc"
 ESAJ_SEM_MOV = "e-SAJ no DOL, sem movimentações para conferir"
 FORA_TJSP = "Fora do TJSP"
 SEM_CNJ = "Sem número de processo no DOL"
-
-
-def dt(s):
-    return datetime.strptime(s, "%d/%m/%Y")
-
-
-def carregar():
-    dados = json.loads((DADOS / "processos.json").read_text(encoding="utf-8"))
-    estruturas, acoes = dados["estruturas"], dados["acoes"]
-
-    def expandir(x):
-        return {"id": x["i"], "pa": x.get("p") or "", "cnj": x.get("c") or "",
-                "sis": {"E": "eproc", "S": "e-SAJ"}.get(x.get("s"), ""),
-                "est": [e for e in estruturas[x["e"]].split("|") if e], "acao": acoes[x["a"]],
-                "ult_data": x.get("u", ""), "ult": x.get("t", ""), "sem_mov": bool(x.get("m")),
-                "sem_acesso": bool(x.get("x")), "migr": [{"data": d, "numero": n} for d, n in x.get("g", [])],
-                "extra": x.get("o", ""), "nomes": x.get("n", []), "nomes_ficha": bool(x.get("nf")),
-                "correlatos": x.get("cr", ""), "data_arq": x.get("d", "")}
-
-    return dados, [expandir(x) for x in dados["pas"]], [expandir(x) for x in dados["arquivados"]]
 
 
 def migr_principal(p):
@@ -110,32 +87,13 @@ def relacao(pas):
             g = grupos.setdefault(numero, {"numero": numero, "itens": []})
             g["itens"].append({"pa": p, "cat": cat, "data": data})
     for g in grupos.values():
-        proprios = [i for i in g["itens"] if i["cat"] != INCIDENTE]
-        g["cat"] = proprios[0]["cat"] if proprios else INCIDENTE
+        proprias = [i["cat"] for i in g["itens"] if i["cat"] != INCIDENTE]
+        if MIGRADO_ESAJ in proprias:
+            g["cat"] = MIGRADO_ESAJ
+        else:
+            g["cat"] = proprias[0] if proprias else INCIDENTE
         g["data"] = ultima([i["data"] for i in g["itens"] if i["data"]])
     return grupos
-
-
-def mapa_foros(pas):
-    mapa = {}
-    for p in pas:
-        if p["cnj"] and len(p["est"]) >= 3 and p["est"][2].startswith("Foro"):
-            mapa.setdefault(p["cnj"][-4:], p["est"][2])
-    return mapa
-
-
-def foro_vara(p, foros, numero=None):
-    est = [e for e in p["est"] if e != "Primeira Instância"]
-    if est and est[0] == "Segunda Instância":
-        return "Segunda Instância"
-    if len(est) >= 3:
-        return " / ".join(est[1:])
-    foro = est[1] if len(est) == 2 else foros.get((numero or p["cnj"])[-4:], "")
-    return f"{foro} (vara não informada no DOL)" if foro else "Não informado no DOL"
-
-
-def nomes(p):
-    return "; ".join(dict.fromkeys(p["nomes"]))
 
 
 def celula(ws, r, c, v, bold=False, cor=None, fundo=None, h="left", size=10, wrap=True, borda=True, v_al="top"):
@@ -183,13 +141,19 @@ def rotulos_barras(serie):
 
 def observacoes(g):
     obs = []
+    marcas = {i["pa"]["sis"] for i in g["itens"] if i["cat"] != INCIDENTE}
+    if len(marcas) > 1:
+        obs.append("O número tem mais de um PA na 9ª e o DOL marca o sistema de forma diferente em cada um: " + "; ".join(
+            f"PA {i['pa']['pa'] or i['pa']['id']} marcado como {i['pa']['sis']}" for i in g["itens"]
+            if i["cat"] != INCIDENTE))
     for i in g["itens"]:
         p = i["pa"]
         if i["cat"] == INCIDENTE and g["cat"] == INCIDENTE:
             if migr_principal(p):
                 situacao = "; o número cadastrado no PA também foi para o eproc e tem linha própria"
             elif p["ult"]:
-                situacao = f"; o número cadastrado no PA continua no e-SAJ, com último andamento '{p['ult']}' em {p['ult_data']}"
+                situacao = (f"; o número cadastrado no PA continua no e-SAJ, com andamento de maior sequência "
+                            f"'{p['ult']}'")
             else:
                 situacao = "; o número cadastrado no PA continua no e-SAJ"
             obs.append(f"A certidão de migração deste número está nas movimentações do PA {p['pa'] or p['id']}, "
@@ -199,25 +163,27 @@ def observacoes(g):
                        f"(número {p['cnj']})")
             continue
         if i["cat"] == MIGRADO_ESAJ:
-            obs.append("No DOL o número ainda aparece como e-SAJ, sem o botão Pasta Digital Eproc")
+            obs.append(f"No PA {p['pa'] or p['id']} o DOL ainda mostra o número como e-SAJ")
         datas = sorted({m["data"] for m in migr_principal(p)}, key=dt) if i["cat"] != INCIDENTE else []
         if len(datas) > 1:
             obs.append(f"O e-SAJ registra mais de uma certidão de migração ({', '.join(datas)})")
-        if p["extra"]:
-            obs.append(p["extra"])
-        if p["nomes_ficha"]:
-            obs.append("Nomes lidos na aba de partes do PA, porque a lista do DOL não os mostra")
+        if p["pai"]:
+            obs.append(f"PA {p['pa']} aparece como correlato dentro da linha de outro PA ({p['origem']})")
+        if p["novo"]:
+            obs.append(f"PA novo na 9ª, distribuído em {p['novo']}")
+        if p["redist"]:
+            obs.append(f"PA redistribuído à 9ª em {p['redist'][0]} (origem: {p['redist'][1]})")
     if g["cat"] == INICIADO:
         obs.append("Sem nenhuma movimentação do e-SAJ no DOL: o processo já nasceu no eproc")
     return ". ".join(dict.fromkeys(obs))
 
 
-def aba_relacao(wb, grupos, foros):
+def aba_relacao(wb, grupos):
     ws = wb.create_sheet("Processos eproc")
     cols = [("Nº", 5), ("Número do processo no eproc", 27), ("Nº do PA no DOL", 14),
             ("Número cadastrado no PA (se diferente)", 25), ("Origem no eproc", 26), ("Remessa ao eproc", 12),
             ("Sistema indicado no DOL", 12), ("Foro / Vara (DOL)", 34), ("Ação (DOL)", 24),
-            ("Partes / assistidos (DOL)", 36), ("Pasta Digital Eproc no DOL", 22), ("Observações", 62)]
+            ("Representados pela Defensoria (DOL)", 38), ("Pasta Digital Eproc no DOL", 22), ("Observações", 62)]
     faixa(ws, "Processos no eproc  |  9ª Defensoria da Unidade Ribeirão Preto",
           f"{len(grupos)} números de processo   |   Um número por linha   |   Use os filtros do cabeçalho", len(cols))
     cabecalho(ws, 4, cols)
@@ -231,39 +197,44 @@ def aba_relacao(wb, grupos, foros):
         cadastrados = [i["pa"]["cnj"] for i in proprios if i["pa"]["cnj"] != g["numero"]]
         if g["cat"] == INCIDENTE:
             sistema, pasta = "Sem PA próprio", "Sem PA próprio no DOL"
-        elif p["sis"] == "eproc":
-            sistema = "eproc"
-            pasta = "Aviso de acesso indisponível" if p["sem_acesso"] else "Botão disponível"
         else:
-            sistema, pasta = "e-SAJ", "Sem botão (DOL trata como e-SAJ)"
+            marcas = list(dict.fromkeys(i["pa"]["sis"] for i in proprios))
+            sistema = " e ".join(marcas)
+            if all(m == "eproc" for m in marcas):
+                pasta = ("Aviso de acesso indisponível" if any(i["pa"]["sem_acesso"] for i in proprios)
+                         else "Não verificado na lista (PA correlato)")
+            elif "eproc" in marcas:
+                pasta = "Varia entre os PAs (ver observações)"
+            else:
+                pasta = "Sem botão (DOL trata como e-SAJ)"
         vals = [n, g["numero"], "\n".join(pas), "\n".join(dict.fromkeys(cadastrados)) or "-", g["cat"], g["data"] or "-",
-                sistema, foro_vara(p, foros, g["numero"]), p["acao"],
-                "\n".join(dict.fromkeys(nomes(i["pa"]) for i in proprios if nomes(i["pa"]))) or "-",
-                pasta, observacoes(g)]
+                sistema, foro_vara(p), p["acao"],
+                "\n".join(dict.fromkeys(representados(i["pa"]) for i in proprios)), pasta, observacoes(g)]
         fundo = "F7F7F7" if n % 2 == 0 else None
         for c, v in enumerate(vals, 1):
             celula(ws, r, c, v, fundo=fundo, bold=c == 2, h="center" if c in (1, 3, 6, 7) else "left")
         celula(ws, r, 5, g["cat"], bold=True, cor=CORES[g["cat"]], fundo=FUNDOS[g["cat"]])
         if pasta.startswith("Aviso"):
             ws.cell(row=r, column=11).font = Font(color="C00000", size=10, name="Calibri")
-        texto = max(len(vals[11]) / 58, len(vals[9]) / 34, len(vals[7]) / 32)
-        ws.row_dimensions[r].height = min(max(30, 14 * (int(texto) + 1)), 180)
+        texto = max(len(vals[11]) / 58, len(vals[9]) / 36, len(vals[7]) / 32)
+        ws.row_dimensions[r].height = min(max(30, 14 * (int(texto) + 1)), 200)
     ws.freeze_panes = "C5"
     ws.auto_filter.ref = f"A4:{get_column_letter(len(cols))}{4 + len(lista)}"
     return lista
 
 
-def aba_resumo(wb, dados, grupos, pas):
+def aba_resumo(wb, meta, grupos, pas):
     ws = wb.active
     ws.title = "Resumo"
     faixa(ws, "Processos no eproc  |  9ª Defensoria Ribeirão Preto",
-          f"Extraído do DOL em {dados['extraido_em']}   |   Somente leitura: nada foi alterado no DOL   |   "
-          f"Consulta feita com o usuário {dados.get('usuario', '')}", 10)
+          f"Leitura do DOL de {meta['extraido_em']}   |   Somente leitura: nada foi alterado no DOL   |   "
+          f"Consulta feita com o usuário {meta['usuario']}", 10)
     for col, w in zip("ABCDEFGHIJ", [40, 12, 10, 14, 14, 14, 14, 14, 14, 14]):
         ws.column_dimensions[col].width = w
 
     cont = Counter(g["cat"] for g in grupos.values())
     migrados = cont[MIGRADO_OK] + cont[MIGRADO_ESAJ] + cont[INCIDENTE]
+    lista = [p for p in pas if not p["pai"]]
     cnjs = {p["cnj"] for p in pas if p["cnj"]}
     no_eproc = {p["cnj"] for p in pas if resultado(p) in CATEGORIAS}
     cards = [("Processos no eproc", len(grupos), "FFFFFF", VERDE, 1),
@@ -279,9 +250,11 @@ def aba_resumo(wb, dados, grupos, pas):
         celula(ws, 5, c, val, bold=True, cor=fg, fundo=bg, h="center", size=20, v_al="center")
     ws.row_dimensions[4].height = 30
     ws.row_dimensions[5].height = 40
-    celula(ws, 6, 1, f"Dos {len(cnjs)} números de processo cadastrados nos {len(pas)} PAs ativos da 9ª, {len(no_eproc)} "
-           f"({len(no_eproc) / len(cnjs):.0%}) já estão no eproc. Somam-se {cont[INCIDENTE]} incidentes que foram para o "
-           "eproc com número próprio.", cor="404040", size=10, borda=False, wrap=False)
+    celula(ws, 6, 1, f"Base: {len(pas)} PAs ativos da 9ª ({len(lista)} na lista de processos ativos e "
+           f"{len(pas) - len(lista)} que aparecem só como correlatos dentro de outro PA), com {len(cnjs)} números de "
+           f"processo distintos. Deles, {len(no_eproc)} ({len(no_eproc) / len(cnjs):.0%}) já estão no eproc; somam-se "
+           f"{cont[INCIDENTE]} incidentes que foram para o eproc com número próprio.",
+           cor="404040", size=10, borda=False, wrap=False)
 
     celula(ws, 8, 1, "Quantidade de processos no eproc, por origem", bold=True, cor=VERDE, size=12, borda=False,
            wrap=False)
@@ -317,7 +290,7 @@ def aba_resumo(wb, dados, grupos, pas):
     ws.add_chart(graf, "E8")
 
     r = fim_cat + 4
-    celula(ws, r, 1, "Acervo ativo da 9ª por sistema (números cadastrados nos PAs)", bold=True, cor=VERDE, size=12,
+    celula(ws, r, 1, "Acervo ativo da 9ª por sistema (números de processo distintos)", bold=True, cor=VERDE, size=12,
            borda=False, wrap=False)
     r += 1
     ini_sis = r
@@ -326,7 +299,9 @@ def aba_resumo(wb, dados, grupos, pas):
     por_cnj = {}
     for p in pas:
         if p["cnj"]:
-            por_cnj.setdefault(p["cnj"], resultado(p))
+            res = resultado(p)
+            atual = por_cnj.get(p["cnj"])
+            por_cnj[p["cnj"]] = res if atual is None or res in CATEGORIAS else atual
     sistemas = Counter("eproc" if c in CATEGORIAS else FORA_TJSP if c == FORA_TJSP else "e-SAJ"
                        for c in por_cnj.values())
     linhas = [("eproc", sistemas["eproc"]), ("e-SAJ", sistemas["e-SAJ"]), (FORA_TJSP, sistemas[FORA_TJSP])]
@@ -375,22 +350,22 @@ def aba_resumo(wb, dados, grupos, pas):
 
 
 def primeira_remessa(pas):
-    return min((dt(m["data"]) for p in pas for m in p["migr"]), default=None)
+    return min((dt(m["data"]) for p in pas for m in p["migr"] if m["data"]), default=None)
 
 
 def andamento_antigo(p, limite):
     return bool(limite and resultado(p) == ESAJ and p["ult_data"] and dt(p["ult_data"]) < limite)
 
 
-def aba_conferencia(wb, pas, foros):
+def aba_conferencia(wb, pas):
     ws = wb.create_sheet("Conferência (todos)")
     limite = primeira_remessa(pas)
-    cols = [("Número cadastrado no PA", 26), ("Nº do PA", 14), ("Sistema indicado no DOL", 12),
-            ("Resultado da conferência", 38), ("Número no eproc (se diferente)", 25), ("Remessa ao eproc", 12),
-            ("Último andamento no e-SAJ (data)", 13), ("Foro / Vara (DOL)", 40), ("Ação (DOL)", 36),
-            ("Observação", 40)]
+    cols = [("Número cadastrado no PA", 26), ("Nº do PA", 14), ("Onde aparece no DOL", 30),
+            ("Sistema indicado no DOL", 12), ("Resultado da conferência", 38), ("Número no eproc (se diferente)", 25),
+            ("Remessa ao eproc", 12), ("Andamento mais recente no e-SAJ (data)", 13), ("Foro / Vara (DOL)", 40),
+            ("Ação (DOL)", 36), ("Observação", 40)]
     faixa(ws, "Conferência de todos os PAs ativos da 9ª",
-          f"{len(pas)} PAs   |   Cada linha é um PA do DOL   |   Filtre a coluna D para ver cada grupo", len(cols))
+          f"{len(pas)} PAs   |   Cada linha é um PA do DOL   |   Filtre a coluna E para ver cada grupo", len(cols))
     cabecalho(ws, 4, cols)
     ordem = {c: i for i, c in enumerate(CATEGORIAS + [ESAJ_INCIDENTE, ESAJ, ESAJ_SEM_MOV, FORA_TJSP, SEM_CNJ])}
     lista = sorted(pas, key=lambda p: (ordem[resultado(p)], p["cnj"] or "~", p["id"]))
@@ -400,86 +375,95 @@ def aba_conferencia(wb, pas, foros):
         itens = itens_eproc(p)
         outros = [num for num, cat, _ in itens if num != p["cnj"]]
         remessa = ultima([d for _, _, d in itens if d])
-        obs = [p["extra"]] if p["extra"] else []
+        obs = []
+        if p["novo"]:
+            obs.append(f"PA novo na 9ª, distribuído em {p['novo']}")
+        if p["redist"]:
+            obs.append(f"Redistribuído à 9ª em {p['redist'][0]} (origem: {p['redist'][1]})")
         antigo = andamento_antigo(p, limite)
         if antigo:
-            obs.append(f"Último andamento no e-SAJ anterior à primeira remessa ao eproc encontrada "
+            obs.append(f"Andamento mais recente no e-SAJ anterior à primeira remessa ao eproc encontrada "
                        f"({limite:%d/%m/%Y}): vale conferir no tribunal")
-        vals = [p["cnj"] or "(sem número)", p["pa"] or p["id"],
+        vals = [p["cnj"] or "(sem número)", p["pa"] or p["id"], p["origem"],
                 {"eproc": "eproc", "e-SAJ": "e-SAJ"}.get(p["sis"], "sem indicação"), res, "\n".join(outros) or "-",
-                remessa or "-", "-" if p["sem_mov"] else p["ult_data"] or "-", foro_vara(p, foros), p["acao"],
+                remessa or "-", "-" if p["sem_mov"] else p["ult_data"] or "-", foro_vara(p), p["acao"],
                 ". ".join(obs)]
         fundo = "F7F7F7" if n % 2 == 0 else None
         for c, v in enumerate(vals, 1):
-            celula(ws, r, c, v, fundo=fundo, h="center" if c in (2, 3, 6, 7) else "left", wrap=c in (5, 8, 9, 10))
+            celula(ws, r, c, v, fundo=fundo, h="center" if c in (2, 4, 7, 8) else "left", wrap=c in (3, 6, 9, 10, 11))
         if res in FUNDOS:
-            celula(ws, r, 4, res, bold=True, cor=CORES[res], fundo=FUNDOS[res])
+            celula(ws, r, 5, res, bold=True, cor=CORES[res], fundo=FUNDOS[res])
         elif res == ESAJ_INCIDENTE:
-            celula(ws, r, 4, res, bold=True, cor=CORES[INCIDENTE], fundo=fundo)
+            celula(ws, r, 5, res, bold=True, cor=CORES[INCIDENTE], fundo=fundo)
         if antigo:
-            ws.cell(row=r, column=10).font = Font(color="C00000", size=10, name="Calibri")
+            ws.cell(row=r, column=11).font = Font(color="C00000", size=10, name="Calibri")
     ws.freeze_panes = "B5"
     ws.auto_filter.ref = f"A4:{get_column_letter(len(cols))}{4 + len(lista)}"
 
 
-def aba_arquivados(wb, arquivados, foros):
+def aba_arquivados(wb, arquivados):
     ws = wb.create_sheet("Arquivados no DOL (eproc)")
     cols = [("Número do processo", 26), ("Nº do PA", 14), ("PA arquivado em", 13), ("Remessa ao eproc", 13),
-            ("Foro / Vara (DOL)", 40), ("Ação (DOL)", 26), ("Partes / assistidos (DOL)", 40)]
+            ("Foro / Vara (DOL)", 40), ("Ação (DOL)", 26), ("Representados pela Defensoria (DOL)", 40)]
     faixa(ws, "PAs já arquivados na 9ª que o DOL indica como eproc",
           "Apenas para informação: não entram na relação principal", len(cols))
     cabecalho(ws, 4, cols)
     for n, p in enumerate(arquivados, 1):
         vals = [p["cnj"], p["pa"] or p["id"], p["data_arq"], ultima([m["data"] for m in p["migr"]]) or "-",
-                foro_vara(p, foros), p["acao"], nomes(p)]
+                foro_vara(p), p["acao"], representados(p)]
         for c, v in enumerate(vals, 1):
             celula(ws, 4 + n, c, v, h="center" if c in (2, 3, 4) else "left")
     if not arquivados:
         celula(ws, 5, 1, "Nenhum.", cor="808080", borda=False)
 
 
-def aba_metodo(wb, dados, pas):
-    n_pas = len(pas)
+def aba_metodo(wb, meta, pas):
     limite = primeira_remessa(pas)
     antigos = sum(1 for p in pas if andamento_antigo(p, limite))
+    com_cert = sum(1 for p in pas if not p["pai"] and p["migr"])
+    n_cert = sum(len(p["migr"]) for p in pas if not p["pai"])
+    t = meta["totais"]
     ws = wb.create_sheet("Como foi feito")
     faixa(ws, "Como a relação foi montada", "Consulta feita somente em modo leitura no DOL", 1)
     ws.column_dimensions["A"].width = 135
-    t = dados.get("totais", {})
     linhas = [
-        f"Fonte: DOL, Acompanhamento de Processo da 9ª Defensoria da UNIDADE RIBEIRÃO PRETO, consulta de "
-        f"{dados['extraido_em']}. Foram lidas por inteiro as listas de processos ativos ({t.get('ATIVO', 0)}), novos "
-        f"({t.get('NOVO', 0)}), redistribuídos ({t.get('REDISTRIBUIDO', 0)}) e arquivados ({t.get('ARQUIVADO', 0)}). "
-        f"Os novos e os redistribuídos também constam da lista de ativos, então a base é de {n_pas} PAs.",
-        "Sistema indicado no DOL: em cada linha da lista, o DOL mostra o botão 'Pasta Digital Eproc' para os números que "
-        "reconhece como eproc e os botões da pasta e da capa do e-SAJ para os demais. Essa marcação foi lida linha a linha.",
-        "Processos que saíram do e-SAJ: para cada número foram lidas as movimentações do e-SAJ que o DOL guarda. A "
+        f"Fonte: DOL, Acompanhamento de Processo da 9ª Defensoria da UNIDADE RIBEIRÃO PRETO. Primeira leitura em "
+        f"{meta['extraido_primeira']} e leitura completa de conferência em {meta['extraido_em']}; esta planilha usa a "
+        f"segunda, com releitura complementar da lista de ativos em {RELEITURA}, para o número dos PAs que têm correlatos. Lista de processos ativos: {t['ATIVO']} PAs (os {t['NOVO']} novos e os {t['REDISTRIBUIDO']} "
+        f"redistribuídos já estão entre eles). Na mesma lista, {t['CORRELATOS']} PAs aparecem apenas na coluna "
+        f"'Processos correlatos' de outro PA; eles também foram lidos um a um e entram na base, que soma {len(pas)} PAs.",
+        "Sistema indicado no DOL: na lista, o DOL mostra o botão 'Pasta Digital Eproc' para os números que reconhece "
+        "como eproc; na ficha do PA, o campo do número traz a legenda EPROC ou SAJ. Para os PAs da lista foi usado o "
+        "botão; para os correlatos, a legenda da ficha. Numa amostra de 6 PAs as duas marcações coincidiram.",
+        "Processos que saíram do e-SAJ: para cada número foram lidas as movimentações do e-SAJ guardadas no DOL. A "
         "certidão 'Remetidos os autos em razão de migração para outro sistema' informa que o processo passa a tramitar "
         "no eproc do TJSP e traz o número. Todas as certidões encontradas mencionam o eproc.",
-        "Incidentes: a tela de movimentações do DOL junta os andamentos do processo principal com os dos incidentes "
-        "(cumprimento de sentença, por exemplo). Quando a certidão de migração traz número diferente do cadastrado no PA, "
-        "quem foi para o eproc foi o incidente, com esse número próprio. Ele entra na relação com o número do eproc e a "
-        "indicação do PA de origem.",
+        "Conferência independente: na segunda leitura, as certidões foram procuradas no texto bruto da página, sem "
+        f"depender da tabela. O resultado dos PAs da lista foi idêntico ao da primeira leitura ({com_cert} PAs com "
+        f"certidão, {n_cert} certidões, os mesmos números). Entre as duas leituras, o DOL passou a marcar como eproc o PA 6334379/2026 "
+        "(0021253-10.2025.8.26.0506), que já constava como migrado.",
+        "Incidentes: a tela de movimentações do DOL junta os andamentos do processo principal com os dos incidentes. "
+        "Quando a certidão de migração traz número diferente do cadastrado no PA, quem foi para o eproc foi o incidente, "
+        "com esse número próprio.",
         f"{INICIADO}: o DOL indica eproc e não há nenhuma movimentação do e-SAJ para o número.",
-        f"{MIGRADO_OK}: há a certidão de migração do próprio número e o DOL já mostra o botão da Pasta Digital Eproc.",
-        f"{MIGRADO_ESAJ}: há a certidão de migração do próprio número, mas o DOL continua tratando o número como "
-        "e-SAJ. São os casos que ficariam de fora de um pedido feito só pela marcação do DOL.",
+        f"{MIGRADO_OK}: há a certidão de migração do próprio número e o DOL já indica eproc.",
+        f"{MIGRADO_ESAJ}: há a certidão de migração do próprio número, mas o DOL ainda indica e-SAJ em pelo menos um "
+        "dos PAs desse número.",
         f"{INCIDENTE}: incidente de um processo acompanhado pela 9ª que foi para o eproc com número diferente do "
         "cadastrado no PA.",
-        "Menções ao eproc sem certidão de migração (por exemplo, carta precatória para tribunal que só recebe petição "
-        "pelo eproc) foram conferidas uma a uma e não indicam mudança de sistema.",
-        "Pasta Digital Eproc no DOL: em todos os números que o DOL reconhece como eproc, a lista mostra ao usuário da "
-        "consulta o aviso 'O seu acesso à pasta digital deste processo não está disponível', com a orientação de pedir ao "
-        "suporte da CTI a análise da vinculação aos Foros. O aviso depende do perfil de quem consulta.",
-        "Foro / Vara: copiados do cadastro do PA no DOL. Quando o DOL não traz a vara, aparece o foro correspondente ao "
-        "código do número. Ação e partes também são os do DOL; nomes sem CPF.",
-        "Limites: o DOL não guarda movimentações do eproc, então a data da remessa é a da certidão no e-SAJ. PAs "
-        "arquivados na 9ª não tiveram as movimentações conferidas; os que o DOL já marca como eproc estão em aba própria. "
-        "Processos de outros tribunais (fora do TJSP) não têm movimentações no DOL e não entram na relação.",
-        f"Pontos para conferir: {antigos} processos classificados como e-SAJ têm o último andamento no DOL anterior à "
-        f"primeira remessa ao eproc encontrada ({limite:%d/%m/%Y}). Neles, a falta da certidão de migração não basta "
-        "para afirmar que continuam no e-SAJ; estão marcados em vermelho na coluna Observação da aba "
-        "'Conferência (todos)'.",
+        "Menções ao eproc sem certidão de migração (carta precatória para tribunal que só recebe petição pelo eproc) "
+        "foram conferidas uma a uma e não indicam mudança de sistema.",
+        "Pasta Digital Eproc no DOL: nos PAs da lista que o DOL reconhece como eproc, aparece ao usuário da consulta o "
+        "aviso 'O seu acesso à pasta digital deste processo não está disponível'. O aviso depende do perfil de quem "
+        "consulta. Para PAs correlatos essa informação não aparece na lista.",
+        "Foro / Vara: copiados do cadastro do PA no DOL; quando o DOL não informa, a célula diz isso. Representados pela "
+        "Defensoria: nomes da coluna Nome da lista de ativos; para os PAs sem nome na lista e para os correlatos, as "
+        "partes que a ficha do PA marca como 'Representado por Defensoria'. Nenhum CPF foi copiado.",
+        f"Pontos para conferir: {antigos} processos classificados como e-SAJ têm o andamento mais recente no DOL "
+        f"anterior à primeira remessa ao eproc encontrada ({limite:%d/%m/%Y}); estão marcados em vermelho na aba "
+        "'Conferência (todos)'. O DOL não guarda movimentações do eproc, então a data da remessa é a da certidão no "
+        "e-SAJ. PAs arquivados não tiveram as movimentações conferidas; os que o DOL marca como eproc estão em aba "
+        "própria. Processos de outros tribunais não têm movimentações no DOL.",
         "Nenhum dado foi incluído, alterado ou excluído no DOL: foram feitas apenas consultas de leitura.",
     ]
     for i, texto in enumerate(linhas, 4):
@@ -490,16 +474,15 @@ def aba_metodo(wb, dados, pas):
 def main():
     saida = Path(sys.argv[1]) if len(sys.argv) > 1 else SAIDA_PADRAO
     saida.parent.mkdir(parents=True, exist_ok=True)
-    dados, pas, arquivados = carregar()
-    foros = mapa_foros(pas)
+    meta, pas, arquivados = carregar()
     grupos = relacao(pas)
 
     wb = Workbook()
-    cont, sistemas = aba_resumo(wb, dados, grupos, pas)
-    aba_relacao(wb, grupos, foros)
-    aba_conferencia(wb, pas, foros)
-    aba_arquivados(wb, arquivados, foros)
-    aba_metodo(wb, dados, pas)
+    cont, sistemas = aba_resumo(wb, meta, grupos, pas)
+    aba_relacao(wb, grupos)
+    aba_conferencia(wb, pas)
+    aba_arquivados(wb, arquivados)
+    aba_metodo(wb, meta, pas)
 
     try:
         wb.save(saida)
