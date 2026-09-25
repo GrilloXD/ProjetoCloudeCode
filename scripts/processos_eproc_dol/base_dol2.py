@@ -81,6 +81,7 @@ CIVEL = "Cível (demais ações)"
 FISCAL = "Execução fiscal"
 PRISAO = "Prisão civil (comunicado de mandado)"
 SEM_CLASSE = "Sem classe no TJ e sem ação que indique a matéria"
+CURADORIA_ESP = "Curadoria especial"
 
 MATERIAS = {
     ALIM: {"Alimentos", "Fixação", "Revisão", "Exoneração", "Oferta", "Alimentos Gravídicos", "Alimentos gravídicos"},
@@ -243,8 +244,10 @@ def carregar():
                     p["categoria"] = AGRAVO
                     p["base"] = (f"Sem intimação com classe; peticionamento da Defensoria de {r[0]} ('{r[3]}') com "
                                  "este número, no PA principal")
+    for p in pas:
+        definir_tipo(p)
 
-    meta = {"extraido_em": E["extraido_em"], "fontes": E["fontes"], "H": E["H"], "prov": E["prov"], "ag": E["ag"],
+    meta ={"extraido_em": E["extraido_em"], "fontes": E["fontes"], "H": E["H"], "prov": E["prov"], "ag": E["ag"],
             "pend": E["pend"], "intTot": E["intTot"], "arq": E["arq"], "fora": E["fora"], "protos": E["protos"]}
     return meta, pas, por_id, classes, mov
 
@@ -283,6 +286,12 @@ def classificar(p):
     p["categoria"] = categoria_acao(p["acao"])
     motivo = "PA sem número de processo" if not p["cnj"] else "número sem intimação com classe no DOL"
     p["base"] = f"Ação cadastrada no DOL ({p['acao'] or 'não informada'}); {motivo}"
+
+
+def definir_tipo(p):
+    """Na curadoria especial a 9ª não representa a parte: o PA conta como curadoria e a matéria fica em 'categoria'."""
+    p["curadoria"] = p["acao"] == "Curadoria Especial"
+    p["tipo"] = CURADORIA_ESP if p["curadoria"] else p["categoria"]
 
 
 def evidencia_agravo(p):
@@ -862,8 +871,103 @@ def carregar_arquivados():
              "est": [z for z in D[e].split("|") if z], "cor": cor, "classes": cls, "mov": mv, "pet": [],
              "pai": "", "fase": ""}
         classificar(p)
+        definir_tipo(p)
         p["situacao"] = situacao_tj(mv)
         lista.append(p)
     meta = {"extraido_em": E["extraido_em"], "total": E["total"], "porAno": E["porAno"],
             "porMes2026": E["porMes2026"]}
     return meta, lista
+
+
+GRUPOS_ATO = [
+    ("Petição inicial", r"^Petição Inicial\|Primeiro grau"),
+    ("Recurso ou resposta a recurso", r"agravo|apelação|embargos de declaração|recurso|contrarraz|contraminuta|Segundo grau"),
+    ("Cumprimento de sentença (pedido)", r"cumprimento de sentença|cumprimento provisório|Execução - Início"),
+    ("Defesa: impugnação, embargos ou contestação", r"Impugnação|embargos|Contestação|contestação|Defesa|defesa|Reconvenção"),
+    ("Manifestação, ciência ou outra petição", r".*"),
+]
+
+
+def grupo_ato(tipo, grau, ato):
+    chave = f"{tipo}|{grau}|{ato}"
+    for nome, rx in GRUPOS_ATO:
+        if re.search(rx, chave):
+            return nome
+    return GRUPOS_ATO[-1][0]
+
+
+def carregar_conferencia(pas, por_id):
+    """Conferência da lista de ativos (dados/conferencia_25set.json, lida no DOL em 25/09/2026, somente leitura).
+
+    Traz a lista completa de ativos com os correlatos, os novos, os redistribuídos, os sem providência e as
+    intimações pendentes. A ação e a vara de um PA que entrou depois de 23/09 vêm do código que a exportação usa
+    para as mesmas ações e varas dos PAs já conhecidos; código sem correspondência única fica sem valor.
+    """
+    arq = DADOS / "conferencia_25set.json"
+    if not arq.exists():
+        return None
+    E = json.loads(arq.read_text(encoding="utf-8"))
+    lista = {p["id"] for p in pas if not p["pai"]}
+    acoes, varas = defaultdict(Counter), defaultdict(Counter)
+    for r in E["ativo"]:
+        p = por_id.get(r[0])
+        if p and not p["pai"]:
+            acoes[r[3]][p["acao"]] += 1
+            varas[r[4]]["|".join(p["est"])] += 1
+
+    def unico(cont):
+        return next(iter(cont)) if len(cont) == 1 else ""
+
+    novo = dict(E["sub"]["NOVO"])
+    sem = set(E["sub"]["SEM"])
+    ids = [r[0] for r in E["ativo"]]
+    novos = []
+    for i, pa, cnj, a, e, cor, nomes in E["ativo"]:
+        if i in lista:
+            continue
+        acao = unico(acoes[a])
+        p = {"id": i, "pa": pa, "cnj": cnj, "controle": "", "sis": "", "acao": acao,
+             "est": [z for z in unico(varas[e]).split("|") if z], "nomes": nomes or [], "urgente": False,
+             "sem_acesso": False, "origem": "lista", "pai": "", "data_insercao": "", "novo": novo.get(i, ""),
+             "redist": None, "sem_prov": i in sem, "cor": [], "partes": [], "tab_partes": None, "ficha_arq": False,
+             "filhos": [], "pet": [], "n_pet": 0, "mov": None, "classes": [], "nomes_ficha": [], "depois": True}
+        classificar(p)
+        p["base"] = (f"PA incluído na 9ª em {p['novo'] or 'data não informada'}, depois da leitura completa de 23/09: "
+                     f"classe do TJ e andamentos não lidos; ação no DOL: {acao or 'não identificada'}")
+        definir_tipo(p)
+        novos.append(p)
+    return {"extraido_em": E["extraido_em"], "tot": E["tot"], "sub": E["sub"], "ativo_ids": ids,
+            "cor_ids": [c[1] for r in E["ativo"] for c in r[5]], "novos": novos,
+            "sairam": [i for i in lista if i not in set(ids)], "pend": E["pend"]}
+
+
+def carregar_completa():
+    """Leitura complementar (dados/completa.json): situações do DOL, todas as petições e todas as intimações."""
+    arq = DADOS / "completa.json"
+    if not arq.exists():
+        return None
+    E = json.loads(arq.read_text(encoding="utf-8"))
+    D = E["D"]
+    pet = {}
+    for pid, rows in E["P"].items():
+        if rows == 0:
+            pet[pid] = None
+            continue
+        lista = []
+        for data, k, proto, st in rows:
+            tipo, grau, ato = D[k].split("|", 2)
+            lista.append({"data": data, "tipo": tipo, "grau": grau, "ato": ato, "protocolo": proto, "status": D[st],
+                          "grupo": grupo_ato(tipo, grau, ato)})
+        pet[pid] = lista
+    intim = {}
+    for num, (loc, pend, cls) in E["I"].items():
+        itens = []
+        for c in cls:
+            classe, assunto = separar_classe(D[c[0]])
+            itens.append({"classe": classe, "assunto": assunto, "texto": D[c[0]], "primeira": c[1], "ultima": c[2],
+                          "qtd": c[3], "foro": D[c[4]]})
+        intim[num] = {"loc": loc, "pendentes": pend,
+                      "classes": sorted(itens, key=lambda z: (chave(z["ultima"]), z["qtd"]), reverse=True)}
+    return {"extraido_em": E["extraido_em"], "tot": E["tot"], "sub": E["sub"], "ativo_ids": E["ativo_ids"].split(","),
+            "cor_ids": [x for x in E["cor_ids"].split(",") if x], "novos": E.get("novos", []), "pet": pet,
+            "intim": intim}
