@@ -14,11 +14,11 @@ void main() {
     var app = await openApp(path);
     final routines = await app.repo.routines();
     expect(routines.map((r) => r.name), [
-      'Superior A',
-      'Inferior A',
-      'Ombros e Braços',
-      'Inferior B',
-      'Superior B',
+      'Peito e Tríceps',
+      'Costas e Bíceps',
+      'Ombros e Abdômen',
+      'Pernas',
+      'Peito e Costas',
     ]);
 
     final w = await app.startWorkout(routines.first);
@@ -38,9 +38,9 @@ void main() {
     w.addRest(15);
     expect(w.restTotal, 165);
 
-    final puxada = w.session.exercises[1];
-    await w.updateValues(puxada.sets.first, weight: 50, reps: 9);
-    await w.toggleSet(puxada, puxada.sets.first);
+    final convergente = w.session.exercises[1];
+    await w.updateValues(convergente.sets.first, weight: 50, reps: 9);
+    await w.toggleSet(convergente, convergente.sets.first);
     expect(w.doneSets, 4);
 
     await w.flush();
@@ -83,9 +83,9 @@ void main() {
     expect(first.sets.first.reps, 6);
     expect(w3.weightHint(first, 1), 45);
 
-    final puxada3 = w3.session.exercises[1];
-    expect(w3.recs[puxada3.id]!.kind, RecKind.keep);
-    expect(w3.previousSet(puxada3, 0)!.weight, 50);
+    final convergente3 = w3.session.exercises[1];
+    expect(w3.recs[convergente3.id]!.kind, RecKind.keep);
+    expect(w3.previousSet(convergente3, 0)!.weight, 50);
     await w3.discard();
     expect(await app.repo.sessions(), hasLength(1));
 
@@ -130,7 +130,55 @@ void main() {
     await app.repo.restoreDefaultProgram();
     final rs = await app.repo.routines();
     expect(rs, hasLength(5));
-    expect(rs.first.exercises, hasLength(6));
+    expect(rs.first.exercises, hasLength(7));
+    expect(await app.repo.sessions(), hasLength(1));
+    await app.repo.adb.close();
+  });
+
+  test('instalação nova começa no Tradicional e a troca de programa mantém o histórico', () async {
+    final path = await tempDbPath();
+    var app = await openApp(path);
+    expect((await app.repo.activeProgram()).id, 'tradicional');
+    final since = await app.repo.programSince();
+    expect(since, isNotNull);
+    expect(DateTime.now().difference(since!).inMinutes, lessThan(1));
+
+    final r = (await app.repo.routines()).first;
+    await seedSession(app.repo, r, DateTime(2026, 10, 26, 18), {
+      'supino_inclinado_maquina': [(45, 10), (45, 9), (45, 8)],
+    });
+    await app.repo.switchProgram('ciencia');
+    await app.repo.adb.close();
+
+    app = await openApp(path);
+    expect((await app.repo.activeProgram()).id, 'ciencia');
+    expect((await app.repo.routines()).map((r) => r.name), [
+      'Peito, Ombros e Tríceps',
+      'Costas e Bíceps',
+      'Pernas A',
+      'Superior',
+      'Pernas B',
+    ]);
+    expect(await app.repo.sessions(), hasLength(1));
+    expect(await app.repo.exerciseHistory('supino_inclinado_maquina'), hasLength(1));
+    await app.repo.adb.close();
+  });
+
+  test('quem tinha a versão anterior do app recebe o Tradicional sem perder sessões', () async {
+    final path = await tempDbPath();
+    var app = await openApp(path);
+    final r = (await app.repo.routines()).first;
+    await seedSession(app.repo, r, DateTime(2026, 10, 26, 18), {
+      'peck_deck': [(60, 15), (60, 14), (60, 13)],
+    });
+    await app.repo.updateRoutine(r..name = 'Superior A');
+    await app.repo.setSetting('program_version', null);
+    await app.repo.setSetting('program_id', null);
+    await app.repo.adb.close();
+
+    app = await openApp(path);
+    expect((await app.repo.activeProgram()).id, 'tradicional');
+    expect((await app.repo.routines()).first.name, 'Peito e Tríceps');
     expect(await app.repo.sessions(), hasLength(1));
     await app.repo.adb.close();
   });

@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/loader.dart';
 import '../workout/workout_screen.dart';
+import 'programs_screen.dart';
 import 'routine_detail_screen.dart';
 import 'routine_editor_screen.dart';
 
@@ -71,9 +72,10 @@ class RoutinesScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Loader<List<Routine>>(
-        load: (a) => a.repo.routines(),
-        builder: (context, routines) {
+      body: Loader<(List<Routine>, ProgramStatus)>(
+        load: (a) async => (await a.repo.routines(), await ProgramStatus.load(a)),
+        builder: (context, data) {
+          final (routines, status) = data;
           final app = AppScope.of(context);
           final sorted = sortByWeekday(routines);
           final planned = plannedSetsPerMuscle(routines.where((r) => r.weekday != null), app.exercises);
@@ -83,7 +85,8 @@ class RoutinesScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
             children: [
-              const SectionHeader('Sua semana', padding: EdgeInsets.fromLTRB(4, 4, 4, 10)),
+              ProgramStatusCard(status: status),
+              const SectionHeader('Sua semana'),
               for (final r in sorted)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),

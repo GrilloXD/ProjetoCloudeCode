@@ -6,6 +6,7 @@ import '../../logic/formatters.dart';
 import '../../logic/progression.dart';
 import '../../state/app_state.dart';
 import '../progress/body_weight.dart';
+import '../routines/programs_screen.dart';
 import '../routines/routine_detail_screen.dart';
 import '../routines/routines_screen.dart';
 import '../settings/settings_screen.dart';
@@ -23,6 +24,7 @@ class _HomeData {
     required this.weights,
     required this.ready,
     required this.stagnant,
+    required this.program,
   });
 
   final List<Routine> routines;
@@ -30,6 +32,7 @@ class _HomeData {
   final List<BodyWeight> weights;
   final List<(Exercise, Recommendation)> ready;
   final List<Exercise> stagnant;
+  final ProgramStatus program;
 }
 
 Future<_HomeData> _load(AppState app) async {
@@ -53,7 +56,14 @@ Future<_HomeData> _load(AppState app) async {
       if (isStagnant(ex, h)) stagnant.add(ex);
     }
   }
-  return _HomeData(routines: routines, week: week, weights: weights, ready: ready, stagnant: stagnant);
+  return _HomeData(
+    routines: routines,
+    week: week,
+    weights: weights,
+    ready: ready,
+    stagnant: stagnant,
+    program: await ProgramStatus.load(app),
+  );
 }
 
 class HomeScreen extends StatelessWidget {
@@ -121,6 +131,16 @@ class _HomeBody extends StatelessWidget {
                   const SizedBox(height: 2),
                   const Text('Shape X',
                       style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
+                  const SizedBox(height: 2),
+                  GestureDetector(
+                    onTap: () => openPrograms(context),
+                    child: Text(
+                      d.program.finished
+                          ? 'Programa ${d.program.program.name} · ciclo concluído'
+                          : 'Programa ${d.program.program.name} · semana ${d.program.week} de ${d.program.program.weeks}',
+                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -133,6 +153,10 @@ class _HomeBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
+        if (d.program.finished) ...[
+          ProgramStatusCard(status: d.program),
+          const SizedBox(height: 12),
+        ],
         if (app.workout != null)
           XCard(
             color: AppColors.accent,

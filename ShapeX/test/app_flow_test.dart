@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shape_x/app.dart';
 import 'package:shape_x/ui/progress/progress_screen.dart';
+import 'package:shape_x/ui/routines/programs_screen.dart';
 import 'package:shape_x/ui/routines/routines_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -30,7 +31,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.calendar_view_week_outlined));
     await settle(tester);
-    final card = find.widgetWithText(RoutineCard, 'Superior A');
+    final card = find.widgetWithText(RoutineCard, 'Peito e Tríceps');
     expect(card, findsOneWidget);
     await tester.ensureVisible(card);
     await tester.pump();
@@ -89,7 +90,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.byIcon(Icons.insights_outlined));
     await settle(tester);
-    final hist = find.descendant(of: find.byType(ProgressScreen), matching: find.text('Superior A'));
+    final hist = find.descendant(of: find.byType(ProgressScreen), matching: find.text('Peito e Tríceps'));
     expect(hist, findsOneWidget);
     expect(find.descendant(of: find.byType(ProgressScreen), matching: find.textContaining('2 séries')),
         findsOneWidget);
@@ -97,6 +98,27 @@ void main() {
     await tester.tap(hist);
     await settle(tester);
     expect(find.text('42,5 kg × 9'), findsNWidgets(2));
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(tester);
+
+    await tester.tap(find.byIcon(Icons.calendar_view_week_outlined));
+    await settle(tester);
+    expect(find.text('Semana 1 de 4'), findsOneWidget);
+    await tester.tap(find.byType(ProgramStatusCard));
+    await settle(tester);
+    final useScience = find.byKey(const Key('use_ciencia'));
+    await tester.ensureVisible(useScience);
+    await tester.pump();
+    await tester.tap(useScience);
+    await settle(tester);
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Usar programa')));
+    await settle(tester, frames: 10);
+    expect(find.widgetWithText(RoutineCard, 'Pernas A'), findsOneWidget);
+    expect(find.text('Semana 1 de 8'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.insights_outlined));
+    await settle(tester);
+    expect(find.descendant(of: find.byType(ProgressScreen), matching: find.text('Peito e Tríceps')),
+        findsOneWidget, reason: 'histórico continua depois da troca');
 
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() => app.repo.adb.close());

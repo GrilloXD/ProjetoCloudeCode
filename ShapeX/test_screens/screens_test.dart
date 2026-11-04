@@ -13,6 +13,7 @@ import 'package:shape_x/logic/formatters.dart';
 import 'package:shape_x/state/app_state.dart';
 import 'package:shape_x/state/workout_controller.dart';
 import 'package:shape_x/ui/library/exercise_detail_screen.dart';
+import 'package:shape_x/ui/routines/programs_screen.dart';
 import 'package:shape_x/ui/routines/routine_detail_screen.dart';
 import 'package:shape_x/ui/theme.dart';
 import 'package:shape_x/ui/workout/workout_screen.dart';
@@ -136,7 +137,7 @@ void main() {
         app,
         WorkoutSummaryScreen(
           summary: FinishSummary(
-            name: 'Superior A',
+            name: 'Peito e Tríceps',
             duration: const Duration(minutes: 58),
             sets: 19,
             volume: 9820,
@@ -171,6 +172,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.calendar_view_week_outlined));
     await _settle(tester);
     await expectLater(find.byKey(const Key('root')), matchesGoldenFile('shots/09_semana.png'));
+
+    await _shot(tester, _wrap(app, const ProgramsScreen()), '10_programas');
 
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() => app.repo.adb.close());

@@ -25,7 +25,10 @@ class AppDatabase {
           await seedProgram(db);
         },
         onUpgrade: (db, oldV, newV) async {},
-        onOpen: (db) async => _seedCatalog(db),
+        onOpen: (db) async {
+          await _seedCatalog(db);
+          await _updateProgram(db);
+        },
       ),
     );
     return AppDatabase._(db);
@@ -135,9 +138,30 @@ class AppDatabase {
     await b.commit(noResult: true);
   }
 
-  static Future<void> seedProgram(DatabaseExecutor db) async {
-    for (var i = 0; i < programSeed.length; i++) {
-      final r = programSeed[i];
+  static Future<String?> _setting(DatabaseExecutor db, String key) async {
+    final rows = await db.query('settings', where: 'key = ?', whereArgs: [key]);
+    return rows.isEmpty ? null : rows.first['value'] as String;
+  }
+
+  /// Recarrega o programa ativo quando uma versão nova do app traz outro
+  /// programa padrão. Sessões, recordes e peso corporal não são tocados.
+  static Future<void> _updateProgram(Database db) async {
+    final current = int.tryParse(await _setting(db, 'program_version') ?? '') ?? 1;
+    if (current == programVersion) return;
+    final active = await _setting(db, 'program_id');
+    await db.transaction((txn) async {
+      await txn.delete('routines');
+      await txn.delete('substitutions');
+      await seedProgram(txn, programId: active ?? defaultProgramId);
+    });
+  }
+
+  /// Grava os treinos de um programa e marca a data de início do ciclo.
+  /// Sem [programId], usa o programa ativo salvo nas configurações.
+  static Future<void> seedProgram(DatabaseExecutor db, {String? programId}) async {
+    final program = programById(programId ?? await _setting(db, 'program_id') ?? defaultProgramId);
+    for (var i = 0; i < program.routines.length; i++) {
+      final r = program.routines[i];
       final rid = await db.insert('routines', {
         'name': r.name,
         'focus': r.focus,
@@ -160,6 +184,14 @@ class AppDatabase {
         });
       }
       await b.commit(noResult: true);
+    }
+    for (final kv in {
+      'program_id': program.id,
+      'program_version': '$programVersion',
+      'program_since': '${DateTime.now().millisecondsSinceEpoch}',
+    }.entries) {
+      await db.insert('settings', {'key': kv.key, 'value': kv.value},
+          conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
 }

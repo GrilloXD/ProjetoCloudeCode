@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../logic/formatters.dart';
 import 'database.dart';
 import 'models.dart';
+import 'seed/program_seed.dart';
 
 class Repository {
   Repository(this.adb);
@@ -479,6 +480,25 @@ class Repository {
       await txn.delete('routines');
       await txn.delete('substitutions');
       await AppDatabase.seedProgram(txn);
+    });
+  }
+
+  // PROGRAMAS
+
+  Future<SeedProgram> activeProgram() async => programById(await getSetting('program_id'));
+
+  Future<DateTime?> programSince() async {
+    final v = int.tryParse(await getSetting('program_since') ?? '');
+    return v == null ? null : DateTime.fromMillisecondsSinceEpoch(v);
+  }
+
+  /// Troca os treinos pelos do programa escolhido e reinicia a contagem de
+  /// semanas. Sessões, recordes e peso corporal continuam salvos.
+  Future<void> switchProgram(String programId) async {
+    await db.transaction((txn) async {
+      await txn.delete('routines');
+      await txn.delete('substitutions');
+      await AppDatabase.seedProgram(txn, programId: programId);
     });
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../routines/programs_screen.dart';
 import 'about_program_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -49,9 +50,16 @@ class SettingsScreen extends StatelessWidget {
                       .push(MaterialPageRoute(builder: (_) => const AboutProgramScreen())),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.swap_horiz_rounded, color: AppColors.accent),
+                  title: const Text('Trocar de programa', style: TextStyle(fontWeight: FontWeight.w700)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMute),
+                  onTap: () => openPrograms(context),
+                ),
+                ListTile(
                   leading: const Icon(Icons.restart_alt_rounded),
-                  title: const Text('Restaurar programa original', style: TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: const Text('Volta os 5 treinos ao padrão. O histórico não é apagado.',
+                  title: const Text('Restaurar programa atual', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: const Text(
+                      'Desfaz suas edições nos treinos e reinicia a contagem de semanas. O histórico não é apagado.',
                       style: TextStyle(color: AppColors.textDim)),
                   onTap: () async {
                     final ok = await confirm(context, 'Restaurar programa?',
@@ -99,7 +107,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Center(
-            child: Text('Shape X 1.0.0', style: TextStyle(color: AppColors.textMute, fontWeight: FontWeight.w600)),
+            child: Text('Shape X 1.1.0', style: TextStyle(color: AppColors.textMute, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

@@ -6,17 +6,17 @@ import '../widgets/common.dart';
 const _sections = [
   (
     'Divisão e frequência',
-    'Cinco dias: Superior A, Inferior A, Ombros e Braços, Inferior B e Superior B. '
-        'Peito e deltoide lateral recebem estímulo 3 vezes por semana, costas, braços, quadríceps, '
-        'posteriores, panturrilha e abdômen 2 vezes. Treinar cada músculo pelo menos 2 vezes por semana '
-        'facilita distribuir o volume com qualidade em cada sessão.'
+    'Tradicional (4 semanas): Peito e Tríceps, Costas e Bíceps, Ombros e Abdômen, Pernas, e Peito e Costas '
+        'na sexta. Peito, costas e deltoide lateral treinam 2 vezes por semana e pernas 1 vez, por enquanto. '
+        'Shape X Ciência (8 semanas, o próximo): cada músculo 2 vezes por semana, com pernas em dois dias. '
+        'Treinar cada músculo pelo menos 2 vezes por semana facilita distribuir o volume com qualidade.'
   ),
   (
     'Volume',
-    'Entre 10 e 20 séries semanais por músculo, contando séries indiretas como meia série. '
-        'Os prioritários (peito, deltoide lateral, costas e quadríceps) ficam entre 12 e 15 séries diretas. '
-        'O app avisa quando um músculo passa de 20 séries, porque daí em diante o ganho extra tende a ser '
-        'pequeno e a recuperação piora.'
+    'Entre 10 e 20 séries semanais por músculo, contando séries indiretas como meia série. No Tradicional, '
+        'peito e costas ficam com 18 séries diretas e quadríceps com 9. No Ciência, peito e costas ficam com 15 '
+        'e quadríceps com 12. O app avisa quando um músculo passa de 20 séries, porque daí em diante o ganho '
+        'extra tende a ser pequeno e a recuperação piora.'
   ),
   (
     'Proximidade da falha',
