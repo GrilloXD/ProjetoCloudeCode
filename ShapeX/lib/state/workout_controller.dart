@@ -19,6 +19,10 @@ class FinishSummary {
     required this.exercises,
     required this.records,
     required this.goals,
+    this.previous,
+    this.compared = 0,
+    this.improved = 0,
+    this.worse = 0,
   });
 
   final String name;
@@ -28,6 +32,15 @@ class FinishSummary {
   final int exercises;
   final List<(String, String)> records;
   final List<(String, String)> goals;
+
+  /// Última vez em que este mesmo treino foi feito.
+  final Session? previous;
+
+  /// Exercícios com histórico, quantos melhoraram e quantos caíram
+  /// em relação à sessão anterior de cada um.
+  final int compared;
+  final int improved;
+  final int worse;
 }
 
 const _compoundPatterns = {
@@ -340,6 +353,10 @@ class WorkoutController extends ChangeNotifier {
     final hist = await repo.historyFor(ids, excludeSessionId: session.id);
     final records = <(String, String)>[];
     final goals = <(String, String)>[];
+    var compared = 0;
+    var improved = 0;
+    var worse = 0;
+    final previous = await repo.previousSessionNamed(session.name, excludeId: session.id!);
     for (final se in session.exercises) {
       final ex = exerciseOf(se);
       if (ex == null) continue;
@@ -348,6 +365,17 @@ class WorkoutController extends ChangeNotifier {
       final before = hist[se.exerciseId] ?? const [];
       for (final r in newRecords(ex, done, before)) {
         records.add((ex.name, r));
+      }
+      final last = before.where((h) => h.sets.isNotEmpty).lastOrNull;
+      if (last != null) {
+        compared++;
+        final now = performanceScore(ex, done);
+        final then = performanceScore(ex, last.sets);
+        if (now > then * 1.005) {
+          improved++;
+        } else if (now < then * 0.995) {
+          worse++;
+        }
       }
       final after = recommend(
         exercise: ex,
@@ -370,6 +398,7 @@ class WorkoutController extends ChangeNotifier {
       app.clearWorkout();
       return null;
     }
+    if (session.routineId != null) await repo.markProgramStarted(session.startedAt);
     final saved = await repo.loadSession(session.id!);
     final summary = FinishSummary(
       name: saved.name,
@@ -379,6 +408,10 @@ class WorkoutController extends ChangeNotifier {
       exercises: saved.exercises.length,
       records: records,
       goals: goals,
+      previous: previous,
+      compared: compared,
+      improved: improved,
+      worse: worse,
     );
     app.clearWorkout();
     return summary;

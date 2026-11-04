@@ -107,7 +107,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Center(
-            child: Text('Shape X 1.1.0', style: TextStyle(color: AppColors.textMute, fontWeight: FontWeight.w600)),
+            child: Text('Shape X 1.1.1', style: TextStyle(color: AppColors.textMute, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

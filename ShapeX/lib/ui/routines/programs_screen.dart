@@ -8,18 +8,44 @@ import '../widgets/common.dart';
 import '../widgets/loader.dart';
 
 class ProgramStatus {
-  ProgramStatus(this.program, this.since);
+  ProgramStatus(this.program, this.start);
 
   final SeedProgram program;
-  final DateTime? since;
 
-  int get days => since == null ? 0 : DateTime.now().difference(since!).inDays;
-  int get week => (days ~/ 7 + 1).clamp(1, program.weeks);
-  bool get finished => days >= program.weeks * 7;
+  /// Primeiro dia do ciclo; nulo até o primeiro treino do programa.
+  final DateTime? start;
+
+  int get days =>
+      start == null ? 0 : (dateOnly(DateTime.now()).difference(start!).inHours / 24).round();
+  int get week => (days < 0 ? 1 : days ~/ 7 + 1).clamp(1, program.weeks);
+  bool get finished => start != null && days >= program.weeks * 7;
+  DateTime? get end => start?.add(Duration(days: program.weeks * 7 - 1));
   SeedProgram? get next => program.nextId == null ? null : programById(program.nextId);
 
+  String get label {
+    if (start == null) return 'Começa no 1º treino';
+    if (days < 0) return 'Começa em ${fmtDate(start!)}';
+    if (finished) return 'Ciclo concluído';
+    return 'Semana $week de ${program.weeks}';
+  }
+
   static Future<ProgramStatus> load(AppState app) async =>
-      ProgramStatus(await app.repo.activeProgram(), await app.repo.programSince());
+      ProgramStatus(await app.repo.activeProgram(), await app.repo.programStart());
+}
+
+Future<void> pickProgramStart(BuildContext context, ProgramStatus status) async {
+  final app = AppScope.read(context);
+  final today = dateOnly(DateTime.now());
+  final d = await showDatePicker(
+    context: context,
+    initialDate: status.start ?? today.add(const Duration(days: 1)),
+    firstDate: today.subtract(const Duration(days: 90)),
+    lastDate: today.add(const Duration(days: 30)),
+    helpText: 'Início do ciclo',
+  );
+  if (d == null) return;
+  await app.repo.setProgramStart(d);
+  app.changed();
 }
 
 Future<void> openPrograms(BuildContext context) =>
@@ -48,7 +74,7 @@ class ProgramStatusCard extends StatelessWidget {
                 child: Text('Programa ${s.program.name}',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
-              Text(s.finished ? 'Ciclo concluído' : 'Semana ${s.week} de ${s.program.weeks}',
+              Text(s.label,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: s.finished ? AppColors.accent : AppColors.textDim,
@@ -60,7 +86,7 @@ class ProgramStatusCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: (s.days / (s.program.weeks * 7)).clamp(0.0, 1.0),
+              value: s.start == null ? 0 : (s.days / (s.program.weeks * 7)).clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor: AppColors.cardHigh,
               color: AppColors.accent,
@@ -72,7 +98,7 @@ class ProgramStatusCard extends StatelessWidget {
                 ? (next == null
                     ? 'Hora de reavaliar o programa.'
                     : 'Hora de trocar. Próximo sugerido: ${next.name}. Toque para ver.')
-                : 'Fica ${s.program.weeks} semanas${s.since == null ? '' : ', desde ${fmtDate(s.since!)}'}.'
+                : '${s.start == null ? 'Fica ${s.program.weeks} semanas, contadas a partir do primeiro treino.' : 'Fica ${s.program.weeks} semanas, de ${fmtDate(s.start!)} a ${fmtDate(s.end!)}.'}'
                     '${next == null ? '' : ' Depois: ${next.name}, já pronto no app.'}',
             style: TextStyle(
               color: s.finished ? AppColors.text : AppColors.textDim,
@@ -130,7 +156,7 @@ class ProgramsScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _ProgramCard(
                   program: p,
-                  active: p.id == status.program.id,
+                  status: p.id == status.program.id ? status : null,
                   suggested: p.id == status.program.nextId,
                   onUse: () => _use(context, p),
                 ),
@@ -145,19 +171,20 @@ class ProgramsScreen extends StatelessWidget {
 class _ProgramCard extends StatelessWidget {
   const _ProgramCard({
     required this.program,
-    required this.active,
+    required this.status,
     required this.suggested,
     required this.onUse,
   });
 
   final SeedProgram program;
-  final bool active;
+  final ProgramStatus? status;
   final bool suggested;
   final VoidCallback onUse;
 
   @override
   Widget build(BuildContext context) {
     final p = program;
+    final active = status != null;
     return XCard(
       borderColor: active ? AppColors.accent.withValues(alpha: 0.5) : null,
       child: Column(
@@ -199,8 +226,23 @@ class _ProgramCard extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           if (active)
-            const Text('Este é o programa atual.',
-                textAlign: TextAlign.center, style: TextStyle(color: AppColors.textDim))
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    status!.start == null
+                        ? 'Início do ciclo: no primeiro treino'
+                        : 'Início do ciclo: ${fmtDate(status!.start!)} · ${status!.label.toLowerCase()}',
+                    style: const TextStyle(color: AppColors.textDim, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('set_program_start'),
+                  onPressed: () => pickProgramStart(context, status!),
+                  child: const Text('Alterar data'),
+                ),
+              ],
+            )
           else
             FilledButton(
               key: Key('use_${p.id}'),

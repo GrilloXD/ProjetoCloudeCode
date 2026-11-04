@@ -4,7 +4,8 @@ App de musculação para hipertrofia com foco em shape em X. Flutter, Android e 
 
 ## O que tem
 
-- Dois programas prontos, cada um com duração. Tradicional (4 semanas, ativo ao instalar): Peito e Tríceps, Costas e Bíceps, Ombros e Abdômen, Pernas, Peito e Costas. Shape X Ciência (8 semanas, o próximo): cada músculo 2 vezes por semana, pernas em dois dias, exercícios simples. A troca é feita em Treinos > Programa ou em Ajustes, e o app avisa na tela inicial quando o ciclo termina. Os treinos continuam editáveis.
+- Dois programas prontos, cada um com duração. Tradicional (4 semanas, ativo ao instalar): Peito e Tríceps, Costas e Bíceps, Ombros e Abdômen, Pernas, Peito e Costas. Shape X Ciência (8 semanas, o próximo): cada músculo 2 vezes por semana, pernas em dois dias, exercícios simples. A contagem de semanas começa no primeiro treino feito no programa (ou numa data escolhida na tela de programas). A troca é feita em Treinos > Programa ou em Ajustes, e o app avisa na tela inicial quando o ciclo termina. Os treinos continuam editáveis.
+- Resumo ao finalizar com duração, séries e volume comparados à última vez do mesmo treino, e quantos exercícios evoluíram.
 - Tela de treino com carga, reps e check por série, preenchimento por toque único, cronômetro de descanso automático (±15 s, pular, ajuste por exercício) e tela ligada durante o treino.
 - Progressão dupla: o app detecta meta batida, sugere a próxima carga respeitando o incremento do equipamento e só aplica quando você toca em Aplicar.
 - Detecção de estagnação (3 sessões sem superar as anteriores), alerta de volume alto, substituições equivalentes que preservam o histórico.

@@ -135,9 +135,7 @@ class _HomeBody extends StatelessWidget {
                   GestureDetector(
                     onTap: () => openPrograms(context),
                     child: Text(
-                      d.program.finished
-                          ? 'Programa ${d.program.program.name} · ciclo concluído'
-                          : 'Programa ${d.program.program.name} · semana ${d.program.week} de ${d.program.program.weeks}',
+                      'Programa ${d.program.program.name} · ${d.program.label.toLowerCase()}',
                       style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                   ),

@@ -337,6 +337,14 @@ class Repository {
     return _loadSessions(where.join(' AND '), args, limit: limit);
   }
 
+  /// Última sessão finalizada com o mesmo nome de treino, para comparação.
+  Future<Session?> previousSessionNamed(String name, {required int excludeId}) async {
+    final list = await _loadSessions(
+        'name = ? AND ended_at IS NOT NULL AND id != ?', [name, excludeId],
+        limit: 1);
+    return list.firstOrNull;
+  }
+
   Future<int> sessionCount() async =>
       Sqflite.firstIntValue(
           await db.rawQuery('SELECT COUNT(*) FROM sessions WHERE ended_at IS NOT NULL')) ??
@@ -490,6 +498,19 @@ class Repository {
   Future<DateTime?> programSince() async {
     final v = int.tryParse(await getSetting('program_since') ?? '');
     return v == null ? null : DateTime.fromMillisecondsSinceEpoch(v);
+  }
+
+  /// Dia em que o ciclo do programa começou: o primeiro treino feito nele,
+  /// ou a data escolhida à mão. Nulo enquanto nenhum treino foi feito.
+  Future<DateTime?> programStart() async {
+    final v = await getSetting('program_started');
+    return v == null ? null : parseDayKey(v);
+  }
+
+  Future<void> setProgramStart(DateTime day) => setSetting('program_started', dayKey(day));
+
+  Future<void> markProgramStarted(DateTime day) async {
+    if (await getSetting('program_started') == null) await setProgramStart(day);
   }
 
   /// Troca os treinos pelos do programa escolhido e reinicia a contagem de

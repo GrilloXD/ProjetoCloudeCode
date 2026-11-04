@@ -144,6 +144,29 @@ void main() {
             exercises: 6,
             records: const [('Supino Inclinado na Máquina', 'Maior carga: 50 kg × 8')],
             goals: const [('Peck Deck (Voador)', 'Meta batida (3×15). Suba para 50 kg')],
+            previous: Session(
+              name: 'Peito e Tríceps',
+              startedAt: DateTime(2026, 10, 27, 18),
+              endedAt: DateTime(2026, 10, 27, 19, 1),
+              exercises: [
+                SessionExercise(
+                  sessionId: 0,
+                  exerciseId: 'supino_convergente',
+                  position: 0,
+                  setsPlanned: 18,
+                  repMin: 8,
+                  repMax: 12,
+                  restSec: 120,
+                  sets: [
+                    for (var i = 0; i < 18; i++)
+                      SetLog(sessionExerciseId: 0, index: i, weight: 51, reps: 10, done: true),
+                  ],
+                ),
+              ],
+            ),
+            compared: 6,
+            improved: 4,
+            worse: 1,
           ),
         ),
       ),

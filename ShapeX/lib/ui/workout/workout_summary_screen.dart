@@ -5,6 +5,50 @@ import '../../state/workout_controller.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
+class _DeltaRow extends StatelessWidget {
+  const _DeltaRow({
+    required this.label,
+    required this.value,
+    required this.delta,
+    this.unit = '',
+    this.neutral = false,
+  });
+
+  final String label;
+  final String value;
+  final double? delta;
+  final String unit;
+  final bool neutral;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = delta;
+    final rounded = d == null ? 0 : d.round();
+    final color = neutral || rounded == 0
+        ? AppColors.textDim
+        : (rounded > 0 ? AppColors.accent : AppColors.warn);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: const TextStyle(color: AppColors.textDim, fontWeight: FontWeight.w600)),
+          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontFeatures: tabular)),
+          SizedBox(
+            width: 76,
+            child: Text(
+              d == null ? '' : (rounded == 0 ? 'igual' : '${rounded > 0 ? '+' : ''}$rounded$unit'),
+              textAlign: TextAlign.right,
+              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontFeatures: tabular),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WorkoutSummaryScreen extends StatelessWidget {
   const WorkoutSummaryScreen({super.key, required this.summary});
 
@@ -47,6 +91,57 @@ class WorkoutSummaryScreen extends StatelessWidget {
                 ],
               ),
             ),
+            if (s.previous != null || s.compared > 0) ...[
+              SectionHeader(s.previous == null
+                  ? 'Comparado ao histórico'
+                  : 'Comparado ao último ${s.name} (${fmtDate(s.previous!.startedAt)})'),
+              XCard(
+                key: const Key('summary_compare'),
+                child: Column(
+                  children: [
+                    if (s.previous != null) ...[
+                      _DeltaRow(
+                        label: 'Volume',
+                        value: '${fmtThousands(s.volume)} kg',
+                        delta: s.previous!.volume <= 0
+                            ? null
+                            : (s.volume - s.previous!.volume) / s.previous!.volume * 100,
+                        unit: '%',
+                      ),
+                      _DeltaRow(
+                        label: 'Séries',
+                        value: '${s.sets}',
+                        delta: (s.sets - s.previous!.doneSetCount).toDouble(),
+                      ),
+                      _DeltaRow(
+                        label: 'Duração',
+                        value: fmtDuration(s.duration),
+                        delta: (s.duration.inMinutes - s.previous!.duration.inMinutes).toDouble(),
+                        unit: ' min',
+                        neutral: true,
+                      ),
+                    ],
+                    if (s.compared > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.insights_rounded, size: 18, color: AppColors.accent),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Evoluiu em ${s.improved} de ${s.compared} exercícios'
+                                '${s.worse > 0 ? ', caiu em ${s.worse}' : ''}.',
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             if (s.records.isNotEmpty) ...[
               const SectionHeader('Recordes pessoais'),
               XCard(

@@ -3,6 +3,8 @@ import 'package:shape_x/data/models.dart';
 import 'package:shape_x/data/seed/exercise_catalog.dart';
 import 'package:shape_x/data/seed/program_seed.dart';
 import 'package:shape_x/logic/analytics.dart';
+import 'package:shape_x/logic/formatters.dart';
+import 'package:shape_x/ui/routines/programs_screen.dart';
 
 final exMap = {for (final e in exerciseCatalog) e.id: e};
 
@@ -62,6 +64,22 @@ void main() {
       });
     });
   }
+
+  test('contagem do ciclo: antes, durante e depois', () {
+    final today = dateOnly(DateTime.now());
+    expect(ProgramStatus(tradicional, null).label, 'Começa no 1º treino');
+    final soon = ProgramStatus(tradicional, today.add(const Duration(days: 1)));
+    expect(soon.label, 'Começa em ${fmtDate(today.add(const Duration(days: 1)))}');
+    expect(soon.finished, isFalse);
+    final first = ProgramStatus(tradicional, today);
+    expect(first.label, 'Semana 1 de 4');
+    expect(first.end, today.add(const Duration(days: 27)));
+    expect(ProgramStatus(tradicional, today.subtract(const Duration(days: 7))).label, 'Semana 2 de 4');
+    expect(ProgramStatus(tradicional, today.subtract(const Duration(days: 27))).label, 'Semana 4 de 4');
+    final done = ProgramStatus(tradicional, today.subtract(const Duration(days: 28)));
+    expect(done.finished, isTrue);
+    expect(done.next?.id, 'ciencia');
+  });
 
   test('Tradicional: grupos juntos, pernas 1 vez e 4 semanas', () {
     final routines = routinesOf(tradicional);

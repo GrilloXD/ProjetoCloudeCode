@@ -114,7 +114,7 @@ void main() {
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Usar programa')));
     await settle(tester, frames: 10);
     expect(find.widgetWithText(RoutineCard, 'Pernas A'), findsOneWidget);
-    expect(find.text('Semana 1 de 8'), findsOneWidget);
+    expect(find.text('Começa no 1º treino'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.insights_outlined));
     await settle(tester);
     expect(find.descendant(of: find.byType(ProgressScreen), matching: find.text('Peito e Tríceps')),

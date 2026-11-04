@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shape_x/logic/formatters.dart';
 import 'package:shape_x/logic/progression.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -161,6 +162,40 @@ void main() {
     ]);
     expect(await app.repo.sessions(), hasLength(1));
     expect(await app.repo.exerciseHistory('supino_inclinado_maquina'), hasLength(1));
+    await app.repo.adb.close();
+  });
+
+  test('ciclo começa no primeiro treino e o resumo compara com a vez anterior', () async {
+    final path = await tempDbPath();
+    final app = await openApp(path);
+    expect(await app.repo.programStart(), isNull, reason: 'sem treino, o ciclo ainda não começou');
+
+    final r = (await app.repo.routines()).first;
+    await seedSession(app.repo, r, DateTime(2026, 10, 26, 18), {
+      'supino_inclinado_maquina': [(40, 10), (40, 10), (40, 9)],
+    });
+
+    final w = await app.startWorkout(r);
+    final se = w.session.exercises.first;
+    for (final s in se.sets) {
+      await w.updateValues(s, weight: 45, reps: 8);
+      await w.toggleSet(se, s);
+    }
+    final summary = (await w.finish())!;
+    expect(summary.previous, isNotNull);
+    expect(summary.previous!.startedAt, DateTime(2026, 10, 26, 18));
+    expect(summary.previous!.volume, 40 * 10 * 2 + 40 * 9);
+    expect(summary.volume, 45 * 8 * 3);
+    expect(summary.compared, 1);
+    expect(summary.improved, 1, reason: '45×8 supera 40×10 no 1RM estimado');
+    expect(summary.worse, 0);
+    expect(await app.repo.programStart(), dateOnly(DateTime.now()));
+
+    await app.repo.switchProgram('ciencia');
+    expect(await app.repo.programStart(), isNull, reason: 'programa novo, ciclo novo');
+    final tomorrow = dateOnly(DateTime.now()).add(const Duration(days: 1));
+    await app.repo.setProgramStart(tomorrow);
+    expect(await app.repo.programStart(), tomorrow);
     await app.repo.adb.close();
   });
 

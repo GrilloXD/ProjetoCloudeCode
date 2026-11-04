@@ -193,5 +193,6 @@ class AppDatabase {
       await db.insert('settings', {'key': kv.key, 'value': kv.value},
           conflictAlgorithm: ConflictAlgorithm.replace);
     }
+    await db.delete('settings', where: 'key = ?', whereArgs: ['program_started']);
   }
 }
