@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && cat \"$CLAUDE_PROJECT_DIR/.claude/nuvem/1-geral.md\" || true"
+          },
+          {
+            "type": "command",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && cat \"$CLAUDE_PROJECT_DIR/.claude/nuvem/2-pecas-juridicas.md\" || true"
+          },
+          {
+            "type": "command",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && cat \"$CLAUDE_PROJECT_DIR/.claude/nuvem/3-atendimento-e-dados.md\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}
