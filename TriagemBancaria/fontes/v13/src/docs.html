@@ -2,9 +2,9 @@
 <div class="docs-page">
 
   <div class="docs-intro">
-    <h2>📄 Documentos — ofícios, autorização e e-mail</h2>
+    <h2>Documentos: ofícios, autorização e e-mail</h2>
     <p>Preencha os dados do atendimento uma única vez: eles entram automaticamente em todos os documentos e na minuta de e-mail. Os ofícios saem no modelo institucional da DPESP, em uma página, prontos para assinatura. Nada do que é digitado aqui fica salvo: ao fechar a página, os dados do(a) assistido(a) são apagados.</p>
-    <div class="v13-passos"><span>1 · Dados do atendimento</span><span>2 · Ofício (instituição ou INSS)</span><span>3 · Revisar e baixar</span><span>4 · Minuta de e-mail para a Triagem</span></div>
+    <div class="v13-passos"><span><b>1</b>Dados do atendimento</span><span><b>2</b>Ofício à instituição ou ao INSS</span><span><b>3</b>Revisar e baixar</span><span><b>4</b>Minuta de e-mail para a Triagem</span></div>
   </div>
 
   <div class="docs-stack">
@@ -24,13 +24,17 @@
         <div><label for="caso-data">Data dos documentos</label><input type="date" id="caso-data"></div>
       </div>
 
-      <div class="v13-sec">⭐ Prioridades e vulnerabilidades <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--mi);">— marque todas as que se aplicam</span></div>
-      <div class="v13-vuln" id="caso-vuln"></div>
-      <div style="margin-top:8px;"><label for="caso-vuln-outra" style="font-size:11px;font-weight:700;color:var(--dp-verde);">Outra condição relevante <em class="opt">— opcional, entra no texto como escrita</em></label>
-        <input type="text" id="caso-vuln-outra" style="display:block;width:100%;border:1.5px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:13px;" placeholder="Ex.: pessoa em tratamento de hemodiálise três vezes por semana"></div>
+      <div class="v13-sec">Prioridades e vulnerabilidades</div>
+      <div class="v13-grid">
+        <div class="c4"><label for="caso-vuln-busca">Condições do(a) assistido(a) <em class="opt">— escolha na lista quantas se aplicarem</em></label>
+          <div class="combo" id="combo-caso-vuln-busca"><input type="text" id="caso-vuln-busca" autocomplete="off" role="combobox" aria-controls="combo-caso-vuln-busca-list" placeholder="Clique ou digite: idosa, deficiência, analfabeta, superendividamento…" oninput="vulnFiltrar()" onfocus="vulnFiltrar()" onclick="vulnFiltrar()" onkeydown="vulnTeclado(event)" onblur="comboBlur('caso-vuln-busca')"><div class="combo-list" id="combo-caso-vuln-busca-list" role="listbox"></div></div>
+          <div class="v13-sel" id="caso-vuln" aria-live="polite"></div></div>
+        <div class="c4"><label for="caso-vuln-outra">Outra condição relevante <em class="opt">— opcional, entra no texto como escrita</em></label>
+          <input type="text" id="caso-vuln-outra" placeholder="Ex.: pessoa em tratamento de hemodiálise três vezes por semana"></div>
+      </div>
       <div class="v13-previa" id="caso-vuln-previa"></div>
 
-      <div class="v13-sec">⏱ Prazo solicitado para resposta</div>
+      <div class="v13-sec">Prazo solicitado para resposta</div>
       <div class="v13-grid">
         <div><label for="caso-prazo">Prazo</label><select id="caso-prazo" onchange="prazoChange()">
           <option value="5">5 dias úteis</option><option value="10" selected>10 dias úteis</option><option value="15">15 dias úteis</option><option value="20">20 dias úteis</option><option value="30">30 dias úteis</option><option value="outro">Outro prazo…</option><option value="sem">Sem prazo específico</option></select></div>
@@ -41,7 +45,7 @@
       </div>
       <div class="v13-info ok" id="caso-prazo-info"></div>
 
-      <div class="v13-sec">✔ Revisão rápida</div>
+      <div class="v13-sec">Revisão rápida</div>
       <div class="v13-resumo" id="caso-resumo"></div>
     </div>
   </div>
@@ -49,7 +53,7 @@
   <!-- ── 2. OFÍCIO À INSTITUIÇÃO FINANCEIRA ──────────────────────── -->
   <div class="doc-card">
    <details class="doc-acc" id="of-acc" open><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>📋 Ofício à instituição financeira</h3><p>Solicita contratos, extratos e informações — com modelo por tipo de caso</p></div></summary>
+    <div class="doc-card-hdr"><h3>Ofício à instituição financeira</h3><p>Solicita contratos, extratos e informações, com modelo por tipo de caso</p></div></summary>
     <div class="doc-card-body">
       <div class="v13-grid">
         <div><label for="of-numero">Nº do ofício (= nº do DOL)</label><input type="text" id="of-numero" inputmode="numeric" placeholder="Ex.: 123456" oninput="this.value=this.value.replace(/[^0-9.\/-]/g,'')"></div>
@@ -59,31 +63,31 @@
         <div class="c2"><label for="of-cpf">CPF</label><input type="text" id="of-cpf" maxlength="14" inputmode="numeric" oninput="mascararCPF(this); espelharAssistido()"></div>
       </div>
 
-      <div class="v13-sec">🏦 Destinatário</div>
+      <div class="v13-sec">Destinatário</div>
       <div class="doc-field">
         <label for="of-banco">Instituição financeira</label>
         <div class="combo" id="combo-of-banco"><input type="text" id="of-banco" autocomplete="off" placeholder="Comece a digitar — ex.: Itaú, BMG, Caixa, Meutudo…" oninput="comboFiltrar('of-banco'); aoMudarBanco();" onfocus="comboFiltrar('of-banco')" onkeydown="comboTeclado(event,'of-banco')" onblur="comboBlur('of-banco')"><div class="combo-list" id="combo-of-banco-list"></div></div>
       </div>
       <div class="v13-grid">
         <div class="c2"><label for="of-end-origem">Endereço a usar</label><select id="of-end-origem" onchange="ofOrigemChange()"></select></div>
-        <div class="c2" style="display:flex;align-items:flex-end;"><button type="button" class="em-mini" onclick="ofSalvarEnderecoAlternativo()">💾 Salvar este endereço como alternativo da instituição</button></div>
+        <div class="c2" style="display:flex;align-items:flex-end;"><button type="button" class="em-mini" onclick="ofSalvarEnderecoAlternativo()">Salvar este endereço como alternativo da instituição</button></div>
         <div class="c4"><label for="of-endereco">Endereço para o ofício (editável)</label><input type="text" id="of-endereco" placeholder="Logradouro, número — bairro, cidade/UF — CEP" oninput="this.dataset.auto=''"></div>
       </div>
       <div class="v13-info ok" id="of-end-info"></div>
 
-      <div class="v13-sec">🧩 Conteúdo do pedido</div>
+      <div class="v13-sec">Conteúdo do pedido</div>
       <div class="v13-grid">
         <div class="c4"><label for="of-modalidade">Modelo do pedido (tipo de caso)</label><select id="of-modalidade" onchange="ofAplicarModalidade(true)"></select><div class="v13-hint">Vindo da triagem, o modelo já chega escolhido. Tudo abaixo pode ser editado.</div></div>
-        <div class="c4"><label for="of-tema">Assunto (complemento)</label><input type="text" id="of-tema"></div>
+        <div class="c4"><label for="of-tema">Assunto do ofício <em class="opt">— frase curta, sem verbo</em></label><input type="text" id="of-tema"><div class="v13-hint">Sai em negrito na linha "Assunto:", como pede o Manual de Redação. Ex.: Conferência de contrato de financiamento de veículo.</div></div>
         <div class="c4"><label for="of-relato">Relato objetivo da situação</label><textarea id="of-relato" rows="3"></textarea></div>
       </div>
-      <label style="font-size:11.5px;font-weight:700;color:var(--gd);display:block;margin:10px 0 6px;">Itens solicitados (desmarque o que não se aplica)</label>
+      <div class="v13-sec">Itens solicitados <span class="v13-sec-nota">desmarque o que não se aplica</span></div>
       <div class="v13-itens" id="of-itens"></div>
       <div class="v13-add"><input type="text" id="of-item-novo" placeholder="Acrescentar item (ex.: cópia do áudio da contratação do dia 10/05)" onkeydown="if(event.key==='Enter'){event.preventDefault();itensAdicionar('of');}"><button type="button" class="em-mini" onclick="itensAdicionar('of')">+ Item</button></div>
       <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:10px;"><input type="checkbox" id="of-autorizacao" checked style="accent-color:var(--dp-verde);"> Mencionar a autorização expressa do(a) assistido(a) anexa (LC 105/2001, art. 1º, § 3º, V)</label>
 
-      <div style="background:var(--lt);border-radius:10px;padding:13px 15px;margin:14px 0 6px;border-left:3px solid var(--gm);">
-        <div style="font-size:11px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">👥 Assinaturas</div>
+      <div class="v13-subcard">
+        <div class="v13-subcard-tit">Assinaturas</div>
         <div class="v13-grid">
           <div class="c2"><label for="of-defensor">Defensor(a) / Analista</label>
             <div class="combo" id="combo-of-defensor"><input type="text" id="of-defensor" autocomplete="off" placeholder="Digite ou escolha" oninput="comboFiltrar('of-defensor')" onfocus="comboFiltrar('of-defensor')" onkeydown="comboTeclado(event,'of-defensor')" onblur="comboBlur('of-defensor')"><div class="combo-list" id="combo-of-defensor-list"></div></div>
@@ -97,14 +101,14 @@
 
       <div class="field-warn" id="of-warn" style="display:none;"></div>
       <div class="doc-checklist">
-        <div class="doc-checklist-tit">✔ Antes de baixar, confirme:</div>
+        <div class="doc-checklist-tit">Antes de baixar, confirme:</div>
         <label><input type="checkbox" id="of-chk-dados" onchange="atualizarChecklistOficio()"> Dados conferidos com o(a) assistido(a) (nome, CPF, instituição, endereço, nº do DOL e do contrato)</label>
         <label><input type="checkbox" id="of-chk-assinatura" onchange="atualizarChecklistOficio()"> O(a) signatário(a) precisa <strong>assinar o ofício antes do envio</strong></label>
       </div>
       <div class="doc-actions">
-        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('banco')">👁 Revisar o documento</button>
-        <button class="btn-doc-dl" id="of-btn-gerar" disabled title="Marque os itens de conferência acima para liberar o download" onclick="gerarOficioPreenchido()">✨ Gerar e baixar ofício (.docx)</button>
-        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('banco')">⬇ Modelo em branco</button>
+        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('banco')">Revisar o documento</button>
+        <button class="btn-doc-dl" id="of-btn-gerar" disabled title="Marque os itens de conferência acima para liberar o download" onclick="gerarOficioPreenchido()">Gerar e baixar ofício (.docx)</button>
+        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('banco')">Modelo em branco</button>
       </div>
     </div>
    </details>
@@ -113,9 +117,9 @@
   <!-- ── OFÍCIO AO INSS ─────────────────────────────────────────── -->
   <div class="doc-card">
    <details class="doc-acc" id="oi-acc"><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>🏛 Ofício ao INSS</h3><p>HISCON, HISCRE, contratos averbados, descontos associativos e bloqueio preventivo</p></div></summary>
+    <div class="doc-card-hdr"><h3>Ofício ao INSS</h3><p>HISCON, HISCRE, contratos averbados, descontos associativos e bloqueio preventivo</p></div></summary>
     <div class="doc-card-body">
-      <div class="v13-info ok" style="margin-bottom:12px;">ℹ️ <strong>Quando usar:</strong> descontos no benefício sem documentos (sem extratos, contratos ou acesso ao Meu INSS/Registrato), especialmente com vulnerabilidade. Os itens podem ser ajustados.</div>
+      <div class="v13-info ok" style="margin-bottom:12px;"><strong>Quando usar:</strong> descontos no benefício sem documentos (sem extratos, contratos ou acesso ao Meu INSS/Registrato), especialmente com vulnerabilidade. Os itens podem ser ajustados.</div>
       <div class="v13-grid">
         <div><label for="oi-numero">Nº do ofício (= nº do DOL)</label><input type="text" id="oi-numero" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9.\/-]/g,'')"></div>
         <div><label for="oi-data">Data do ofício</label><input type="date" id="oi-data"></div>
@@ -130,10 +134,11 @@
         <div class="c4" id="oi-endereco-outro-wrap" style="display:none;"><label for="oi-endereco-outro">Outro endereço</label><input type="text" id="oi-endereco-outro"></div>
         <div class="c4"><label for="oi-relato">Relato <em class="opt">— opcional; vazio = texto padrão</em></label><textarea id="oi-relato" rows="2" placeholder="O(A) assistido(a) compareceu a esta unidade relatando…"></textarea></div>
       </div>
-      <label style="font-size:11.5px;font-weight:700;color:var(--gd);display:block;margin:10px 0 6px;">Itens solicitados</label>
+      <div class="v13-sec">Itens solicitados</div>
       <div class="v13-itens" id="oi-itens"></div>
       <div class="v13-add"><input type="text" id="oi-item-novo" placeholder="Acrescentar item" onkeydown="if(event.key==='Enter'){event.preventDefault();itensAdicionar('oi');}"><button type="button" class="em-mini" onclick="itensAdicionar('oi')">+ Item</button></div>
-      <div style="background:var(--lt);border-radius:10px;padding:13px 15px;margin:14px 0 6px;border-left:3px solid var(--gm);">
+      <div class="v13-subcard">
+        <div class="v13-subcard-tit">Assinatura</div>
         <div class="v13-grid">
           <div class="c2"><label for="oi-signatario">Signatário(a)</label>
             <div class="combo" id="combo-oi-signatario"><input type="text" id="oi-signatario" autocomplete="off" placeholder="Digite ou escolha" oninput="comboFiltrar('oi-signatario')" onfocus="comboFiltrar('oi-signatario')" onkeydown="comboTeclado(event,'oi-signatario')" onblur="comboBlur('oi-signatario')"><div class="combo-list" id="combo-oi-signatario-list"></div></div></div>
@@ -142,14 +147,14 @@
       </div>
       <div class="field-warn" id="oi-warn" style="display:none;"></div>
       <div class="doc-checklist">
-        <div class="doc-checklist-tit">✔ Antes de baixar, confirme:</div>
+        <div class="doc-checklist-tit">Antes de baixar, confirme:</div>
         <label><input type="checkbox" id="oi-chk-dados" onchange="atualizarChecklistOficioINSS()"> Dados conferidos (nome, CPF, benefício, DOL e agência do INSS)</label>
         <label><input type="checkbox" id="oi-chk-assinatura" onchange="atualizarChecklistOficioINSS()"> O(a) signatário(a) precisa <strong>assinar o ofício antes do envio</strong></label>
       </div>
       <div class="doc-actions">
-        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('inss')">👁 Revisar o documento</button>
-        <button class="btn-doc-dl" id="oi-btn-gerar" disabled title="Marque os itens de conferência acima para liberar o download" onclick="gerarOficioINSS()">✨ Gerar e baixar ofício ao INSS (.docx)</button>
-        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('inss')">⬇ Modelo em branco</button>
+        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('inss')">Revisar o documento</button>
+        <button class="btn-doc-dl" id="oi-btn-gerar" disabled title="Marque os itens de conferência acima para liberar o download" onclick="gerarOficioINSS()">Gerar e baixar ofício ao INSS (.docx)</button>
+        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('inss')">Modelo em branco</button>
       </div>
     </div>
    </details>
@@ -158,7 +163,7 @@
   <!-- ── AUTORIZAÇÃO EXPRESSA ───────────────────────────────────── -->
   <div class="doc-card">
    <details class="doc-acc" id="au-acc"><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>✍ Autorização expressa</h3><p>Termo genérico de autorização e afastamento de sigilo bancário, para assinatura do(a) assistido(a)</p></div></summary>
+    <div class="doc-card-hdr"><h3>Autorização expressa</h3><p>Termo genérico de autorização e afastamento de sigilo bancário, para assinatura do(a) assistido(a)</p></div></summary>
     <div class="doc-card-body">
       <div class="v13-grid">
         <div class="c2"><label for="au-nome">Nome do(a) assistido(a)</label><input type="text" id="au-nome" oninput="this.dataset.auto=''"></div>
@@ -170,9 +175,9 @@
       <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:10px;"><input type="checkbox" id="au-ref" checked style="accent-color:var(--dp-verde);"> Incluir referência (DOL, instituição e contrato). A autorização continua valendo para qualquer instituição.</label>
       <div class="field-warn" id="au-warn" style="display:none;"></div>
       <div class="doc-actions">
-        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('aut')">👁 Revisar o documento</button>
-        <button class="btn-doc-dl" onclick="gerarAutorizacaoPreenchida()">✨ Gerar e baixar autorização (.docx)</button>
-        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('aut')">⬇ Modelo em branco</button>
+        <button class="btn-doc-copy" type="button" onclick="docPrevisualizar('aut')">Revisar o documento</button>
+        <button class="btn-doc-dl" onclick="gerarAutorizacaoPreenchida()">Gerar e baixar autorização (.docx)</button>
+        <button class="btn-doc-copy" type="button" onclick="baixarModeloEmBranco('aut')">Modelo em branco</button>
       </div>
     </div>
    </details>
@@ -181,27 +186,27 @@
   <!-- ── MINUTA DE E-MAIL PARA A TRIAGEM ───────────────────────── -->
   <style>
     .em-row{display:grid;grid-template-columns:1.3fr 1.7fr auto auto;gap:7px;align-items:center;margin-bottom:7px;}
-    .em-row input{border:1.5px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;width:100%;}
-    .em-row input:focus{outline:none;border-color:var(--ga);box-shadow:0 0 0 3px rgba(159,196,64,.2);}
-    .em-mini{background:var(--lt);border:1px solid var(--gp2);color:var(--gd);border-radius:7px;padding:7px 9px;font-size:12px;cursor:pointer;font-weight:700;white-space:nowrap;font-family:inherit;}
-    .em-mini:hover{background:var(--gp);}
-    .em-x{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;}
-    .em-x:hover{background:#fee2e2;}
+    .em-row input{border:1px solid #d8dbd0;border-radius:10px;padding:9px 11px;font-size:12.5px;font-family:inherit;width:100%;background:#fff;transition:border-color .18s,box-shadow .18s;}
+    .em-row input:focus{outline:none;border-color:var(--lux-ouro);box-shadow:0 0 0 3px rgba(184,146,74,.16);}
+    .em-mini{background:#fff;border:1px solid var(--lux-fio);color:var(--lux-verde-2);border-radius:9px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;font-family:inherit;transition:border-color .15s,color .15s,background .15s;}
+    .em-mini:hover{border-color:var(--lux-ouro);color:var(--lux-ouro-txt);background:var(--lux-marfim);}
+    .em-x{color:var(--lux-vinho);}
+    .em-x:hover{border-color:#ebcdc8;background:#fdf7f6;color:var(--lux-vinho);}
     @media(max-width:680px){.em-row{grid-template-columns:1fr;}}
-    #em-saida{width:100%;min-height:240px;border:1.5px solid var(--bdr);border-radius:9px;padding:11px 13px;font-size:12.5px;font-family:inherit;line-height:1.6;color:var(--dk);margin-top:10px;white-space:pre-wrap;}
+    #em-saida{width:100%;min-height:260px;border:1px solid var(--lux-fio);border-radius:12px;padding:14px 16px;font-size:12.5px;font-family:inherit;line-height:1.7;color:var(--lux-tinta);margin-top:12px;white-space:pre-wrap;background:var(--lux-marfim);}
+    #em-saida:focus{outline:none;border-color:var(--lux-ouro);box-shadow:0 0 0 3px rgba(184,146,74,.16);background:#fff;}
     .combo{position:relative;}
-    .combo-list{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:60;background:#fff;border:1px solid #d9d9d9;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:262px;overflow-y:auto;display:none;}
-    .combo-item{padding:9px 13px;font-size:13px;line-height:1.3;cursor:pointer;border-bottom:1px solid #f2f2f2;color:#333;}
-    .combo-item:last-child{border-bottom:none;}
-    .combo-item:hover,.combo-item-active{background:var(--lt);color:var(--gd);}
-    .combo-empty{padding:10px 13px;font-size:12px;color:#777;}
+    .combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--lux-fio);border-radius:12px;box-shadow:0 18px 44px rgba(16,38,26,.16);max-height:300px;overflow-y:auto;display:none;padding:4px;}
+    .combo-item{padding:9px 12px;font-size:13px;line-height:1.35;cursor:pointer;border-radius:8px;color:var(--lux-tinta);}
+    .combo-item:hover,.combo-item-active{background:var(--lux-marfim);color:var(--lux-verde-2);box-shadow:inset 2px 0 0 var(--lux-ouro);}
+    .combo-empty{padding:10px 12px;font-size:12px;color:var(--lux-cinza-2);}
     .field-hint{font-size:10.5px;color:#666;margin-top:3px;}
   </style>
   <div class="doc-card">
    <details class="doc-acc" id="em-acc"><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>📧 Minuta de e-mail para a Triagem</h3><p>Os ofícios vão à Triagem; os oficiais conferem e encaminham a cada instituição</p></div></summary>
+    <div class="doc-card-hdr"><h3>Minuta de e-mail para a Triagem</h3><p>Os ofícios vão à Triagem; os oficiais conferem e encaminham a cada instituição</p></div></summary>
     <div class="doc-card-body">
-      <div class="v13-info ok" style="margin-bottom:12px;">ℹ️ <strong>Fluxo mantido:</strong> o e-mail <strong>não</strong> vai direto às instituições. A minuta segue ao e-mail oficial da Triagem; após conferência, os oficiais responsáveis enviam a cada destinatário. Nome, DOL, contrato, prazo e prioridades entram automaticamente.</div>
+      <div class="v13-info ok" style="margin-bottom:12px;"><strong>Fluxo mantido:</strong> o e-mail <strong>não</strong> vai direto às instituições. A minuta segue ao e-mail oficial da Triagem; após conferência, os oficiais responsáveis enviam a cada destinatário. Nome, DOL, contrato, prazo e prioridades entram automaticamente.</div>
       <div class="v13-grid">
         <div class="c2"><label for="em-triagem">E-mail oficial da Triagem (Para) <span class="req">*</span></label><input type="text" id="em-triagem" placeholder="e-mail institucional da Triagem" oninput="salvarEmailTriagem()"><div class="v13-hint">Fica salvo neste navegador.</div></div>
         <div class="c2"><label for="em-cc">Outros destinatários (Cc) <em class="opt">— opcional</em></label><input type="text" id="em-cc" placeholder="separe por vírgula"></div>
@@ -211,19 +216,19 @@
         <div><label for="em-dol">Nº do DOL</label><input type="text" id="em-dol"></div>
         <div><label for="em-assinatura">Quem envia <em class="opt">— salvo</em></label><input type="text" id="em-assinatura" placeholder="Nome e função" oninput="emSalvarConfig()"></div>
       </div>
-      <div class="v13-sec">🏦 Instituições destinatárias e e-mails</div>
+      <div class="v13-sec">Instituições destinatárias e e-mails</div>
       <div id="em-instituicoes"></div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;"><button class="em-mini" onclick="emAdicionarInstituicao()">+ Adicionar instituição</button><button class="em-mini" onclick="emUsarInstituicaoDoCaso()">⤵ Usar a instituição do atendimento</button></div>
-      <div class="v13-hint" style="margin-top:6px;">Os e-mails vêm da lista verificada da Triagem ou do cadastro de instituições. Use 💾 para guardar os e-mails de uma instituição.</div>
-      <div class="v13-sec">📎 Documentos anexos</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;"><button class="em-mini" onclick="emAdicionarInstituicao()">+ Adicionar instituição</button><button class="em-mini" onclick="emUsarInstituicaoDoCaso()">Usar a instituição do atendimento</button></div>
+      <div class="v13-hint" style="margin-top:6px;">Os e-mails vêm da lista verificada da Triagem ou do cadastro de instituições. Use o botão Salvar ao lado da instituição para guardar os e-mails dela.</div>
+      <div class="v13-sec">Documentos anexos</div>
       <div class="v13-chips" id="em-anexos"></div>
       <div class="field-warn" id="em-warn" style="display:none;"></div>
       <div class="doc-actions" style="margin-top:14px;">
-        <button class="btn-doc-dl" onclick="emGerarMinuta()">✨ Gerar minuta</button>
-        <button class="btn-doc-copy" onclick="emCopiarMinuta()" id="em-btn-copiar">📋 Copiar texto</button>
-        <button class="btn-doc-copy" onclick="emCopiarCampo('em-assunto','em-btn-assunto')" id="em-btn-assunto">📋 Copiar assunto</button>
-        <button class="btn-doc-copy" onclick="emCopiarCampo('em-destinatarios','em-btn-dest')" id="em-btn-dest">📋 Copiar destinatários</button>
-        <button class="btn-doc-copy" onclick="emLimparMinuta()">🧹 Limpar</button>
+        <button class="btn-doc-dl" onclick="emGerarMinuta()">Gerar minuta</button>
+        <button class="btn-doc-copy" onclick="emCopiarMinuta()" id="em-btn-copiar">Copiar texto</button>
+        <button class="btn-doc-copy" onclick="emCopiarCampo('em-assunto','em-btn-assunto')" id="em-btn-assunto">Copiar assunto</button>
+        <button class="btn-doc-copy" onclick="emCopiarCampo('em-destinatarios','em-btn-dest')" id="em-btn-dest">Copiar destinatários</button>
+        <button class="btn-doc-copy" onclick="emLimparMinuta()">Limpar</button>
       </div>
       <div class="v13-grid" style="margin-top:10px;"><div class="c4"><label for="em-assunto">Assunto (automático, editável)</label><input type="text" id="em-assunto"></div></div>
       <div class="v13-hint" id="em-destinatarios" style="margin-top:6px;"></div>
@@ -235,13 +240,13 @@
   <!-- ── CADASTRO DE INSTITUIÇÕES ──────────────────────────────── -->
   <div class="doc-card">
    <details class="doc-acc" id="inst-acc"><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>🗂 Cadastro de instituições</h3><p>Razão social, CNPJ, endereço da sede, endereço alternativo e e-mails — consulta, edição e inclusão</p></div></summary>
+    <div class="doc-card-hdr"><h3>Cadastro de instituições</h3><p>Razão social, CNPJ, endereço da sede, endereço alternativo e e-mails: consulta, edição e inclusão</p></div></summary>
     <div class="doc-card-body">
       <div class="v13-info ok">Base: lista de participantes do Banco Central, com o endereço da sede no cadastro do CNPJ da Receita Federal (consulta de 16/11/2026), mais as agências de Ribeirão Preto do cadastro da unidade. Edições ficam salvas neste navegador; use <strong>Exportar</strong> e <strong>Importar</strong> para compartilhar com a equipe. Não preencha dados que não tenham fonte confirmada.</div>
       <div class="doc-field" style="margin-top:10px;"><label for="inst-busca">Buscar</label><input type="text" id="inst-busca" placeholder="Nome, razão social ou CNPJ" oninput="instFiltrar()"></div>
       <div class="v13-lista-inst" id="inst-lista"><div style="cursor:default;color:var(--mi);">Digite ao menos 2 letras.</div></div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;"><button class="em-mini" onclick="instEditar(-1)">+ Nova instituição</button><button class="em-mini" onclick="instExportar()">⬇ Exportar edições</button><label class="em-mini" style="cursor:pointer;">⬆ Importar<input type="file" id="inst-import" accept=".json,application/json" style="display:none;" onchange="instImportar(this)"></label></div>
-      <div id="inst-form" style="display:none;margin-top:12px;border:1.5px solid var(--bdr);border-radius:12px;padding:13px;">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;"><button class="em-mini" onclick="instEditar(-1)">+ Nova instituição</button><button class="em-mini" onclick="instExportar()">Exportar edições</button><label class="em-mini" style="cursor:pointer;">Importar<input type="file" id="inst-import" accept=".json,application/json" style="display:none;" onchange="instImportar(this)"></label></div>
+      <div id="inst-form" class="v13-subcard" style="display:none;">
         <div class="v13-grid">
           <div class="c2"><label for="inst-f-nome">Nome</label><input type="text" id="inst-f-nome"></div>
           <div class="c2"><label for="inst-f-razao">Razão social</label><input type="text" id="inst-f-razao"></div>
@@ -257,7 +262,7 @@
         </div>
         <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:8px;"><input type="checkbox" id="inst-f-conf" style="accent-color:var(--dp-verde);"> Dados conferidos</label>
         <div class="v13-hint" id="inst-f-fonte" style="margin-top:6px;"></div>
-        <div class="doc-actions"><button class="btn-doc-dl" onclick="instSalvar()">💾 Salvar</button><button class="btn-doc-copy" onclick="instRemoverEdicao()">↺ Remover edição</button><button class="btn-doc-copy" onclick="$id('inst-form').style.display='none'">Fechar</button></div>
+        <div class="doc-actions"><button class="btn-doc-dl" onclick="instSalvar()">Salvar</button><button class="btn-doc-copy" onclick="instRemoverEdicao()">Remover edição</button><button class="btn-doc-copy" onclick="$id('inst-form').style.display='none'">Fechar</button></div>
       </div>
     </div>
    </details>
@@ -266,7 +271,7 @@
   <!-- ── CONFIGURAÇÕES DA UNIDADE ──────────────────────────────── -->
   <div class="doc-card">
    <details class="doc-acc"><summary class="doc-acc-sum">
-    <div class="doc-card-hdr"><h3>⚙ Unidade (cabeçalho e rodapé dos documentos)</h3><p>Padrão: Unidade de Ribeirão Preto — editável e salvo neste navegador</p></div></summary>
+    <div class="doc-card-hdr"><h3>Unidade e padrão dos documentos</h3><p>Cabeçalho, rodapé e padrão de redação dos ofícios. Padrão: Unidade de Ribeirão Preto, editável e salvo neste navegador</p></div></summary>
     <div class="doc-card-body">
       <div class="v13-grid">
         <div class="c2"><label for="un-cab1">Cabeçalho — linha 1</label><input type="text" id="un-cab1" oninput="unidadePrevia()"></div>
@@ -277,9 +282,11 @@
         <div><label for="un-telefone">Telefone <em class="opt">— opcional</em></label><input type="text" id="un-telefone" oninput="unidadePrevia()"></div>
         <div><label for="un-email">E-mail para respostas</label><input type="text" id="un-email" oninput="unidadePrevia()"></div>
         <div class="c2"><label for="un-site">Site</label><input type="text" id="un-site" oninput="unidadePrevia()"></div>
+        <div class="c4"><label for="un-padrao">Padrão de redação dos ofícios e da autorização</label><select id="un-padrao" onchange="unidadePrevia()"></select>
+          <div class="v13-hint">A estrutura segue sempre o padrão ofício do Manual de Redação da Presidência da República (identificação, data, endereçamento, assunto em negrito, parágrafos numerados com recuo de 2,5 cm, fecho e signatário centralizado). Aqui muda só a fonte. Também dá para trocar na tela de revisão do documento.</div></div>
       </div>
       <div class="v13-previa" id="un-previa"></div>
-      <div class="doc-actions"><button class="btn-doc-dl" onclick="unidadeSalvar()">💾 Salvar</button><button class="btn-doc-copy" onclick="unidadeRestaurar()">↺ Restaurar padrão</button></div>
+      <div class="doc-actions"><button class="btn-doc-dl" onclick="unidadeSalvar()">Salvar</button><button class="btn-doc-copy" onclick="unidadeRestaurar()">Restaurar padrão</button></div>
     </div>
    </details>
   </div>

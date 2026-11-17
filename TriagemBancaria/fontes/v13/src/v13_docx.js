@@ -1,12 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   v13 — GERAÇÃO DE DOCUMENTOS (.docx) A PARTIR DO MODELO INSTITUCIONAL
-   O cabeçalho (logotipo oficial), os estilos e as margens vêm do modelo-base
-   embutido (B64_BASE_V13). O corpo é montado aqui, parágrafo a parágrafo, e a
-   tipografia é ajustada automaticamente para o documento caber em UMA página.
+   v13 — GERAÇÃO DE DOCUMENTOS (.docx)
+   Timbre: cabeçalho com o logotipo oficial e rodapé da unidade, do modelo
+   institucional da DPESP embutido (B64_BASE_V13).
+   Corpo: padrão ofício do Manual de Redação da Presidência da República
+   (identificação, local e data, endereçamento, assunto, vocativo, texto com
+   parágrafos numerados e recuo de 2,5 cm, fecho e identificação do signatário;
+   margens de 3 cm à esquerda, 1,5 cm à direita e 2 cm em cima e embaixo).
+   A fonte segue o "padrão de redação" escolhido na aba Documentos e é
+   reduzida aos poucos, se preciso, para o documento caber em UMA página.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Dados da unidade (cabeçalho, rodapé e e-mail de resposta). Editáveis na aba
-   Documentos > Configurações da unidade; ficam salvos neste navegador. */
+/* Dados da unidade (cabeçalho, rodapé, e-mail de resposta e padrão de redação).
+   Editáveis na aba Documentos > Unidade e padrão dos documentos; ficam salvos neste navegador. */
 var UNIDADE_PADRAO = {
   cab1: 'Unidade de Ribeirão Preto',
   cab2: 'Atendimento Especializado',
@@ -15,7 +20,8 @@ var UNIDADE_PADRAO = {
   endereco: 'Rua Alice Além Saadi, 1256 - Nova Ribeirânia - Ribeirão Preto/SP - CEP 14096-570',
   telefone: '',
   email: 'triagem.ribpreto@defensoria.sp.def.br',
-  site: 'www.defensoria.sp.def.br'
+  site: 'www.defensoria.sp.def.br',
+  padrao: 'mr2002'
 };
 var UNIDADE_KEY = 'dpesp-unidade-v13';
 function unidadeCarregar() {
@@ -25,6 +31,7 @@ function unidadeCarregar() {
     var s = JSON.parse(localStorage.getItem(UNIDADE_KEY) || '{}');
     Object.keys(s).forEach(function (k) { if (k in u && typeof s[k] === 'string') u[k] = s[k]; });
   } catch (e) {}
+  if (!DX_PADROES[u.padrao]) u.padrao = UNIDADE_PADRAO.padrao;
   return u;
 }
 function unidadeRodape(u) {
@@ -36,38 +43,64 @@ function unidadeRodape(u) {
   return [l1, p2.join(' | ')];
 }
 
-/* ── Níveis de ajuste tipográfico ─────────────────────────────────────────
-   Nível 0 = tipografia do modelo institucional (Helvetica/Arial 10,5).
-   Se o texto não couber em uma página, o sistema passa para Cambria e, depois,
-   Times New Roman, reduzindo corpo e espaçamentos de forma gradual. */
-var DX_NIVEIS = [
-  { id: 0, fonte: 'Helvetica', medir: 'Arial',           pt: 10.5, entre: 1.15, depois: 240, rotulo: 'Arial 10,5 (padrão do modelo)' },
-  { id: 1, fonte: 'Cambria',   medir: 'Cambria',         pt: 10.5, entre: 1.12, depois: 200, rotulo: 'Cambria 10,5' },
-  { id: 2, fonte: 'Times New Roman', medir: 'Times New Roman', pt: 10.5, entre: 1.10, depois: 180, rotulo: 'Times New Roman 10,5' },
-  { id: 3, fonte: 'Times New Roman', medir: 'Times New Roman', pt: 10,   entre: 1.06, depois: 140, rotulo: 'Times New Roman 10' },
-  { id: 4, fonte: 'Times New Roman', medir: 'Times New Roman', pt: 9.5,  entre: 1.03, depois: 110, rotulo: 'Times New Roman 9,5' },
-  { id: 5, fonte: 'Times New Roman', medir: 'Times New Roman', pt: 9,    entre: 1.0,  depois: 80,  rotulo: 'Times New Roman 9' }
-];
-/* Geometria da página do modelo (em pontos): A4, margens do sectPr e área útil.
-   A altura útil desconta o cabeçalho com o logotipo (que é mais alto que a margem). */
-var DX_PAGINA = { larguraUtil: 464.9, alturaUtil: 716 };
-/* Altura de linha "simples" de cada fonte, em múltiplos do corpo (métricas das fontes). */
-var DX_ALTURA_FONTE = { 'Arial': 1.15, 'Cambria': 1.172, 'Times New Roman': 1.15 };
-/* Largura média de caractere (em múltiplos do corpo) — usada só se o navegador
-   não conseguir medir o texto com a fonte real. */
-var DX_LARGURA_MEDIA = { 'Arial': 0.515, 'Cambria': 0.495, 'Times New Roman': 0.455 };
+/* ── Padrões de redação ────────────────────────────────────────────────────
+   A estrutura é sempre a do padrão ofício; muda a fonte. Cada padrão tem a sua
+   sequência de ajuste: se o texto não couber em uma página, reduz o corpo e os
+   espaçamentos e, nos padrões sem serifa, passa para Times New Roman. */
+var DX_PADROES = {
+  mr2002: { rotulo: 'Manual de Redação, 2ª edição (2002): Times New Roman 12',
+    seq: [['Times New Roman', 12], ['Times New Roman', 11.5], ['Times New Roman', 11], ['Times New Roman', 10.5], ['Times New Roman', 10], ['Times New Roman', 9.5]] },
+  mr2018: { rotulo: 'Manual de Redação, 3ª edição (2018): Calibri 12',
+    seq: [['Calibri', 12], ['Calibri', 11.5], ['Calibri', 11], ['Calibri', 10.5], ['Times New Roman', 10.5], ['Times New Roman', 10], ['Times New Roman', 9.5]] },
+  inst: { rotulo: 'Fonte do modelo institucional da DPESP: Helvetica 10,5',
+    seq: [['Helvetica', 10.5], ['Cambria', 10.5], ['Times New Roman', 10.5], ['Times New Roman', 10], ['Times New Roman', 9.5]] }
+};
+var DX_ESCALA = [1, 0.85, 0.72, 0.6, 0.5, 0.42, 0.36];
+var DX_DEPOIS = [120, 100, 80, 70, 60, 50, 40];
+function dxNiveis(padrao) {
+  var p = DX_PADROES[padrao] || DX_PADROES[UNIDADE_PADRAO.padrao];
+  return p.seq.map(function (f, i) {
+    return { id: i, fonte: f[0], medir: f[0] === 'Helvetica' ? 'Arial' : f[0], pt: f[1], entre: 1, depois: DX_DEPOIS[i], k: DX_ESCALA[i],
+      rotulo: f[0] + ' ' + String(f[1]).replace('.', ',') };
+  });
+}
+/* Geometria da página (pt). Margens do Manual: esquerda 3 cm, direita 1,5 cm,
+   superior e inferior 2 cm. A altura útil desconta o timbre, que avança além da margem superior. */
+var DX_MARGENS = { top: 1134, right: 851, bottom: 1134, left: 1701, header: 425, footer: 425 };
+var DX_PAGINA = { larguraUtil: (11906 - 1701 - 851) / 20, alturaUtil: 722 };
+var DX_RECUO = 1418;
+/* Altura da linha simples de cada fonte, em múltiplos do corpo (métricas das fontes). */
+var DX_ALTURA_FONTE = { 'Arial': 1.15, 'Cambria': 1.172, 'Times New Roman': 1.15, 'Calibri': 1.2207 };
+/* Largura média de caractere (em múltiplos do corpo), usada quando a fonte não está instalada no computador. */
+var DX_LARGURA_MEDIA = { 'Arial': 0.5, 'Cambria': 0.48, 'Times New Roman': 0.445, 'Calibri': 0.455 };
 
-var _dxCanvas = null;
+var _dxCanvas = null, _dxFonteOk = {};
 function _dxCtx() {
   if (_dxCanvas === null) {
     try { _dxCanvas = document.createElement('canvas').getContext('2d'); } catch (e) { _dxCanvas = false; }
   }
   return _dxCanvas || null;
 }
+function _dxDisponivel(fonte) {
+  if (fonte in _dxFonteOk) return _dxFonteOk[fonte];
+  var ctx = _dxCtx(), ok = false;
+  if (ctx) {
+    try {
+      var amostra = 'mmmmmmmmmlli WWW 0123 ãçé', ok1, ok2;
+      ctx.font = '72px monospace'; var a = ctx.measureText(amostra).width;
+      ctx.font = '72px "' + fonte + '", monospace'; ok1 = ctx.measureText(amostra).width !== a;
+      ctx.font = '72px serif'; var b = ctx.measureText(amostra).width;
+      ctx.font = '72px "' + fonte + '", serif'; ok2 = ctx.measureText(amostra).width !== b;
+      ok = ok1 || ok2;
+    } catch (e) {}
+  }
+  _dxFonteOk[fonte] = ok;
+  return ok;
+}
 /* Largura (pt) de um trecho de texto na fonte/corpo indicados. */
 function dxLarguraTexto(txt, fonte, pt, negrito) {
   var ctx = _dxCtx();
-  if (ctx) {
+  if (ctx && _dxDisponivel(fonte)) {
     try {
       ctx.font = (negrito ? 'bold ' : '') + '100px "' + fonte + '"';
       if ('fontKerning' in ctx) ctx.fontKerning = 'none';
@@ -102,31 +135,32 @@ function dxRunXml(r, nv) {
   var f = nv.fonte, sz = Math.round(nv.pt * 2);
   return '<w:r><w:rPr><w:rFonts w:ascii="' + f + '" w:hAnsi="' + f + '" w:cs="' + f + '"/>'
     + (r.b ? '<w:b/>' : '<w:b w:val="0"/>') + (r.i ? '<w:i/>' : '')
-    + '<w:color w:val="0D0D0D"/><w:sz w:val="' + sz + '"/><w:szCs w:val="' + sz + '"/></w:rPr>'
-    + (r.br ? '<w:br/>' : '')
+    + '<w:color w:val="000000"/><w:sz w:val="' + sz + '"/><w:szCs w:val="' + sz + '"/><w:lang w:val="pt-BR"/></w:rPr>'
     + '<w:t xml:space="preserve">' + dxEsc(r.t) + '</w:t></w:r>';
 }
-/* Parágrafo lógico -> XML. p = { estilo, runs, antes, depois, jc, recuo, linha } (twips). */
+/* Parágrafo lógico -> XML. p = { estilo, runs, antes, depois, jc, recuo, linha } (espaços em twips). */
 function dxParXml(p, nv) {
   var linha = Math.round(240 * (p.linha || nv.entre));
   var pPr = '<w:pPr><w:pStyle w:val="' + (p.estilo || 'OficioCorpo') + '"/>'
+    + (p.manter ? '<w:keepNext/>' : '')
     + '<w:spacing w:before="' + (p.antes || 0) + '" w:after="' + (p.depois == null ? nv.depois : p.depois) + '" w:line="' + linha + '" w:lineRule="auto"/>'
-    + (p.recuo ? '<w:ind w:firstLine="' + p.recuo + '"/>' : '')
+    + '<w:ind w:left="0" w:right="0" w:firstLine="' + (p.recuo || 0) + '"/>'
     + '<w:jc w:val="' + (p.jc || 'left') + '"/></w:pPr>';
   return '<w:p>' + pPr + (p.runs || []).map(function (r) { return dxRunXml(r, nv); }).join('') + '</w:p>';
 }
-/* Tabela sem bordas com duas assinaturas lado a lado (signatário e estagiário). */
+/* Identificação do(s) signatário(s): nome em maiúsculas, sem negrito e sem linha; cargo com iniciais maiúsculas;
+   centralizado. Com dois signatários (defensor e estagiário), ficam lado a lado em tabela sem bordas. */
 function dxAssinaturasXml(blocos, nv) {
-  var w = Math.floor(9298 / blocos.length);
+  var total = 11906 - DX_MARGENS.left - DX_MARGENS.right, w = Math.floor(total / blocos.length);
   var cel = blocos.map(function (b) {
     return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/></w:tcPr>'
-      + b.map(function (l, i) { return dxParXml({ estilo: 'OficioAssinatura', runs: [{ t: l, b: i === 0 }], depois: 0, linha: 1.1 }, nv); }).join('')
+      + b.map(function (l) { return dxParXml({ estilo: 'OficioAssinatura', runs: [{ t: l }], depois: 0, jc: 'center' }, nv); }).join('')
       + '</w:tc>';
   }).join('');
-  return '<w:tbl><w:tblPr><w:tblW w:w="9298" w:type="dxa"/><w:tblLayout w:type="fixed"/>'
+  return '<w:tbl><w:tblPr><w:tblW w:w="' + total + '" w:type="dxa"/><w:tblLayout w:type="fixed"/>'
     + '<w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr>'
     + '<w:tblGrid>' + blocos.map(function () { return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>'
-    + '<w:tr>' + cel + '</w:tr></w:tbl>';
+    + '<w:tr><w:trPr><w:cantSplit/></w:trPr>' + cel + '</w:tr></w:tbl>';
 }
 
 /* Altura estimada (pt) de uma lista de parágrafos lógicos em um nível. */
@@ -135,35 +169,38 @@ function dxAltura(pars, nv) {
   pars.forEach(function (p) {
     if (p.assinaturas) {
       var maior = 0;
-      p.assinaturas.forEach(function (b) { maior = Math.max(maior, b.length); });
-      alt += maior * altFonte * 1.1;
+      p.assinaturas.forEach(function (b) {
+        var n = 0, larg = DX_PAGINA.larguraUtil / p.assinaturas.length;
+        b.forEach(function (l) { n += dxContarLinhas([{ t: l }], nv.medir, nv.pt, larg, 0); });
+        maior = Math.max(maior, n);
+      });
+      alt += maior * altFonte;
       return;
     }
-    var larg = DX_PAGINA.larguraUtil - (p.margem || 0);
-    var n = dxContarLinhas(p.runs || [], nv.medir, nv.pt, larg, (p.recuo || 0) / 20);
+    var n = dxContarLinhas(p.runs || [], nv.medir, nv.pt, DX_PAGINA.larguraUtil, (p.recuo || 0) / 20);
     alt += n * altFonte * (p.linha || nv.entre) + ((p.antes || 0) + (p.depois == null ? nv.depois : p.depois)) / 20;
   });
   return alt;
 }
-/* Ajusta os espaçamentos estruturais (cabeçalho do ofício, fecho) a cada nível. */
+/* Ajusta os espaçamentos estruturais (entre os blocos do ofício e o espaço da assinatura) a cada nível. */
 function dxAplicarNivel(pars, nv) {
-  var k = [1, 0.85, 0.75, 0.6, 0.5, 0.4][nv.id];
   return pars.map(function (p) {
     var q = {}; Object.keys(p).forEach(function (c) { q[c] = p[c]; });
-    if (q.antesBase != null) q.antes = Math.round(q.antesBase * k);
-    if (q.depoisBase != null) q.depois = Math.round(q.depoisBase * k);
+    if (q.antesBase != null) q.antes = Math.round(q.antesBase * nv.k);
+    if (q.depoisBase != null) q.depois = Math.max(q.depoisMin || 0, Math.round(q.depoisBase * nv.k));
     return q;
   });
 }
 /* Escolhe o primeiro nível em que o conteúdo cabe em uma página.
-   Retorna { nivel, pars, altura, cabe }. forcar = id do nível (opcional). */
-function dxAjustar(pars, forcar) {
-  var folga = 0.965, ultimo = null;
-  for (var i = 0; i < DX_NIVEIS.length; i++) {
-    if (forcar != null && i !== forcar) continue;
-    var nv = DX_NIVEIS[i], pp = dxAplicarNivel(pars, nv), h = dxAltura(pp, nv);
-    ultimo = { nivel: nv, pars: pp, altura: h, cabe: h <= DX_PAGINA.alturaUtil * folga };
-    if (ultimo.cabe || forcar != null) return ultimo;
+   Retorna { nivel, pars, altura, cabe, padrao }. opcoes = { padrao, nivel (forçar) }. */
+function dxAjustar(pars, opcoes) {
+  opcoes = opcoes || {};
+  var padrao = opcoes.padrao || unidadeCarregar().padrao, niveis = dxNiveis(padrao), folga = 0.97, ultimo = null;
+  for (var i = 0; i < niveis.length; i++) {
+    if (opcoes.nivel != null && i !== opcoes.nivel) continue;
+    var nv = niveis[i], pp = dxAplicarNivel(pars, nv), h = dxAltura(pp, nv);
+    ultimo = { nivel: nv, pars: pp, altura: h, cabe: h <= DX_PAGINA.alturaUtil * folga, padrao: padrao };
+    if (ultimo.cabe || opcoes.nivel != null) return ultimo;
   }
   return ultimo;
 }
@@ -202,14 +239,48 @@ function dxItens(lista) {
     return { letra: letras.charAt(i) + ')', texto: t };
   });
 }
+/* Endereço postal em duas linhas (Manual): 1ª logradouro, número e bairro; 2ª CEP e cidade/UF. */
 function dxEnderecoLinhas(end) {
   var s = String(end || '').trim();
   if (!s) return [];
-  var partes = s.split(/\s+—\s+|\s+–\s+/).map(function (x) { return x.trim(); }).filter(Boolean);
-  if (partes.length <= 1) return [s];
-  if (partes.length === 2) return partes;
-  return [partes[0], partes.slice(1).join(' - ')];
+  var partes = s.split(/\s+[—–]\s+|\s+-\s+(?=CEP\b)/i).map(function (x) { return x.trim(); }).filter(Boolean);
+  var cep = '', cidade = '', resto = [];
+  partes.forEach(function (p) {
+    var m = p.match(/(?:CEP:?\s*)?(\d{5}-?\d{3}|\[00000-000\])/i);
+    if (m && !cep) { cep = m[1]; p = (p.slice(0, m.index) + p.slice(m.index + m[0].length)).replace(/^[\s,\-]+|[\s,\-]+$/g, ''); }
+    if (p) resto.push(p);
+  });
+  if (resto.length) {
+    var ult = resto[resto.length - 1], mc = ult.match(/^(.*?),\s*([^,]+\/\s*[A-Z]{2})$/);
+    if (mc) { resto[resto.length - 1] = mc[1]; cidade = mc[2]; }
+    else if (resto.length > 1 && /(\/\s*[A-Z]{2}|\[CIDADE\/UF\])$/.test(ult)) { cidade = ult; resto.pop(); }
+  }
+  if (!cep && !cidade) return partes.length <= 1 ? [s] : [partes[0], partes.slice(1).join(' - ')];
+  if (/^\d{8}$/.test(cep)) cep = cep.slice(0, 5) + '-' + cep.slice(5);
+  return [resto.join(' - '), [cep, cidade].filter(Boolean).join(' ')].filter(Boolean);
 }
+/* Cabeçalho comum do ofício: identificação, local e data, endereçamento, assunto e vocativo. */
+function dxCabecalhoOficio(P, u, d, dt, ender, assunto, vocativo) {
+  var sigla = String(u.sigla || '').trim().replace(/^\/+|\/+$/g, '');
+  P.push({ estilo: 'OficioNumero', runs: [{ t: 'OFÍCIO Nº ' + (d.numero || '_____') + '/' + dt.ano + (sigla ? '/' + sigla : '') }], antesBase: 120, depois: 0 });
+  P.push({ estilo: 'OficioData', runs: [{ t: String(u.cidade || '').replace(/\s*\/\s*[A-Z]{2}$/, '') + ', ' + dt.texto + '.' }], jc: 'right', antesBase: 240, depois: 0 });
+  ender.forEach(function (l, i) { P.push({ estilo: 'OficioDestinatario', runs: [{ t: l }], antesBase: i === 0 ? 360 : null, antes: i === 0 ? null : 0, depois: 0 }); });
+  P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Assunto: ' + assunto.replace(/\.+$/, '') + '.', b: true }], antesBase: 300, depois: 0 });
+  P.push({ estilo: 'OficioCorpo', runs: [{ t: vocativo }], recuo: DX_RECUO, antesBase: 300 });
+}
+/* Numera os parágrafos do texto quando houver três ou mais (o vocativo e o fecho não se numeram). */
+function dxNumerar(textos) {
+  var numerar = textos.length >= 3;
+  return textos.map(function (p, i) {
+    var q = { runs: (numerar ? [{ t: (i + 1) + '. ' }] : []).concat(p.runs), jc: 'both', recuo: DX_RECUO };
+    return q;
+  });
+}
+function dxFechoEAssinaturas(P, blocos) {
+  P.push({ estilo: 'OficioFecho', runs: [{ t: 'Atenciosamente,' }], recuo: DX_RECUO, antesBase: 120, depoisBase: 900, depoisMin: 640, manter: true });
+  P.push({ assinaturas: blocos });
+}
+function dxNomeSignatario(n) { return n ? String(n).trim().toLocaleUpperCase('pt-BR') : '[NOME DO(A) SIGNATÁRIO(A)]'; }
 
 /* ── OFÍCIO À INSTITUIÇÃO FINANCEIRA ─────────────────────────────────────
    d = { numero, dataIso, instituicao, endereco, assistido, cpf, dol, contrato,
@@ -217,104 +288,86 @@ function dxEnderecoLinhas(end) {
          autorizacao(bool), signatario, cargo, estagiario, estagiarioCargo, unidade } */
 function dxOficioBanco(d) {
   var u = d.unidade || unidadeCarregar(), dt = dxDataExtenso(d.dataIso), P = [];
-  var J = 'both', R = 567;
-  P.push({ estilo: 'OficioNumero', runs: [{ t: 'Ofício nº ' + (d.numero || '_____') + '/' + dt.ano + (u.sigla ? ' - ' + u.sigla : '') }], antesBase: 200, depoisBase: 160 });
-  P.push({ estilo: 'OficioData', runs: [{ t: u.cidade + ', ' + dt.texto + '.' }], jc: 'right', depoisBase: 320 });
-  P.push({ estilo: 'OficioDestinatario', runs: [{ t: 'A Sua Senhoria o(a) Senhor(a)' }], depois: 0, linha: 1.1 });
-  P.push({ estilo: 'OficioDestinatario', runs: [{ t: 'Representante Legal de ' + (d.instituicao || '[INSTITUIÇÃO]'), b: true }], depois: 0, linha: 1.1 });
-  dxEnderecoLinhas(d.endereco).forEach(function (l) { P.push({ estilo: 'OficioDestinatario', runs: [{ t: l }], depois: 0, linha: 1.1 }); });
-  var assunto = 'Solicitação de informações e documentos. ' + (d.tema ? d.tema.replace(/\.+$/, '') + '. ' : '') + (d.assistido || '[NOME]') + ', CPF nº ' + (d.cpf || '[CPF]') + '.';
-  P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Assunto: ', b: true }, { t: assunto }], antesBase: 260, depois: 0, jc: J });
-  var ref = [];
-  if (d.dol) ref.push('Atendimento DOL nº ' + d.dol);
-  if (d.contrato) ref.push('Contrato nº ' + d.contrato);
-  if (ref.length) P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Referência: ', b: true }, { t: ref.join(' · ') + '.' }], antesBase: 60, depois: 0 });
-  P.push({ estilo: 'OficioCorpo', runs: [{ t: 'Senhor(a) Representante,' }], antesBase: 300 });
+  var ender = ['Ao(À) Senhor(a)', 'Representante Legal de ' + (d.instituicao || '[INSTITUIÇÃO]')].concat(dxEnderecoLinhas(d.endereco));
+  dxCabecalhoOficio(P, u, d, dt, ender, (d.tema && d.tema.trim()) || 'Solicitação de informações e documentos', 'Prezado(a) Senhor(a),');
 
+  var T = [];
   var p1 = 'A Defensoria Pública do Estado de São Paulo, no exercício das funções institucionais previstas no art. 134 da Constituição Federal e no art. 4º, incisos II e VIII, da Lei Complementar nº 80/1994, atua em favor de ';
   var p1b = ', CPF nº ' + (d.cpf || '[CPF]') + ' (art. 128, XI, da Lei Complementar nº 80/1994 e art. 162, VI, da Lei Complementar Estadual nº 988/2006)'
     + (d.autorizacao ? ', que firmou a autorização expressa anexa (art. 1º, § 3º, V, da Lei Complementar nº 105/2001)' : '')
     + ', e solicita a Vossa Senhoria as informações e os documentos abaixo, com fundamento no direito à informação e de acesso aos próprios dados e contratos (arts. 6º, III, 43, 54-D, III, e 54-G, II, do Código de Defesa do Consumidor e art. 18 da Lei nº 13.709/2018).';
-  P.push({ runs: [{ t: p1 }, { t: d.assistido || '[NOME]', b: true }, { t: p1b }], jc: J, recuo: R });
-  if (d.relato && d.relato.trim()) P.push({ runs: [{ t: d.relato.trim() }], jc: J, recuo: R });
-  if (d.vulnerabilidade && d.vulnerabilidade.trim()) P.push({ runs: [{ t: d.vulnerabilidade.trim() }], jc: J, recuo: R });
+  T.push({ runs: [{ t: p1 }, { t: d.assistido || '[NOME]', b: true }, { t: p1b }] });
+  if (d.relato && d.relato.trim()) T.push({ runs: [{ t: d.relato.trim() }] });
+  if (d.vulnerabilidade && d.vulnerabilidade.trim()) T.push({ runs: [{ t: d.vulnerabilidade.trim() }] });
 
   var pz = dxPrazoTexto(d.prazo);
   var itens = dxItens(d.itens || []);
   var runs = [{ t: 'Solicita-se o envio' + (pz ? ', no prazo de ' : '') }];
   if (pz) runs.push({ t: pz, b: true });
   runs.push({ t: (pz ? ' contados do recebimento deste ofício' : '') + ', do seguinte' + (d.contrato ? ', em especial quanto ao contrato nº ' + d.contrato : '') + ': ' });
-  itens.forEach(function (it, i) {
-    runs.push({ t: it.letra + ' ', b: true });
-    runs.push({ t: it.texto + (i < itens.length - 1 ? '; ' : '.') });
-  });
+  itens.forEach(function (it, i) { runs.push({ t: it.letra + ' ' + it.texto + (i < itens.length - 1 ? '; ' : '.') }); });
   if (!itens.length) runs.push({ t: '[descrever os documentos solicitados].' });
-  P.push({ runs: runs, jc: J, recuo: R });
+  T.push({ runs: runs });
   if (d.justificativa && d.justificativa.trim()) {
     var j = d.justificativa.trim().replace(/\.+$/, '');
-    P.push({ runs: [{ t: 'O prazo indicado considera as circunstâncias do caso: ' + j.charAt(0).toLowerCase() + j.slice(1) + '.' }], jc: J, recuo: R });
+    T.push({ runs: [{ t: 'O prazo indicado considera as circunstâncias do caso: ' + j.charAt(0).toLowerCase() + j.slice(1) + '.' }] });
   }
-  P.push({ runs: [{ t: 'A resposta poderá ser enviada ao e-mail institucional desta unidade (' + u.email + ')' + (d.dol ? ', com referência ao DOL nº ' + d.dol : '') + '. Na impossibilidade de atendimento, total ou parcial, solicita-se que a negativa seja formalizada por escrito, com a respectiva fundamentação.' }], jc: J, recuo: R });
-  P.push({ estilo: 'OficioFecho', runs: [{ t: 'Atenciosamente,' }], antesBase: 200, depoisBase: 560 });
-  var blocos = [[d.signatario || '[NOME DO(A) SIGNATÁRIO(A)]', d.cargo || '[CARGO]', u.cab1]];
-  if (d.estagiario) blocos.push([d.estagiario, d.estagiarioCargo || 'Estagiário(a) de Direito', u.cab1]);
-  P.push({ assinaturas: blocos });
+  T.push({ runs: [{ t: 'A resposta poderá ser enviada ao e-mail institucional desta unidade (' + u.email + ')' + (d.dol ? ', com referência ao DOL nº ' + d.dol : '') + '. Na impossibilidade de atendimento, total ou parcial, solicita-se que a negativa seja formalizada por escrito, com a respectiva fundamentação.' }] });
+  P = P.concat(dxNumerar(T));
+  var blocos = [[dxNomeSignatario(d.signatario), d.cargo || '[Cargo]']];
+  if (d.estagiario) blocos.push([dxNomeSignatario(d.estagiario), d.estagiarioCargo || 'Estagiário(a) de Direito']);
+  dxFechoEAssinaturas(P, blocos);
   return P;
 }
 
 /* ── OFÍCIO AO INSS ──────────────────────────────────────────────────────── */
 function dxOficioINSS(d) {
-  var u = d.unidade || unidadeCarregar(), dt = dxDataExtenso(d.dataIso), P = [];
-  var J = 'both', R = 567, pz = dxPrazoTexto(d.prazo);
-  P.push({ estilo: 'OficioNumero', runs: [{ t: 'Ofício nº ' + (d.numero || '_____') + '/' + dt.ano + (u.sigla ? ' - ' + u.sigla : '') }], antesBase: 200, depoisBase: 160 });
-  P.push({ estilo: 'OficioData', runs: [{ t: u.cidade + ', ' + dt.texto + '.' }], jc: 'right', depoisBase: 320 });
-  P.push({ estilo: 'OficioDestinatario', runs: [{ t: 'Ao(À) Senhor(a)' }], depois: 0, linha: 1.1 });
-  P.push({ estilo: 'OficioDestinatario', runs: [{ t: 'Gerente Executivo(a) do Instituto Nacional do Seguro Social - INSS', b: true }], depois: 0, linha: 1.1 });
-  dxEnderecoLinhas(d.endereco).forEach(function (l) { P.push({ estilo: 'OficioDestinatario', runs: [{ t: l }], depois: 0, linha: 1.1 }); });
-  P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Assunto: ', b: true }, { t: 'Solicitação de extratos (HISCON e HISCRE), de cópias de contratos e de bloqueio preventivo de empréstimos consignados. ' + (d.assistido || '[NOME]') + ', CPF nº ' + (d.cpf || '[CPF]') + '.' }], antesBase: 260, depois: 0, jc: J });
+  var u = d.unidade || unidadeCarregar(), dt = dxDataExtenso(d.dataIso), P = [], pz = dxPrazoTexto(d.prazo);
+  var ender = ['Ao(À) Senhor(a)', 'Gerente Executivo(a) do Instituto Nacional do Seguro Social'].concat(dxEnderecoLinhas(d.endereco));
+  dxCabecalhoOficio(P, u, d, dt, ender, 'Extratos, contratos e bloqueio de consignados', 'Senhor(a) Gerente Executivo(a),');
   var ref = [];
-  if (d.dol) ref.push('Atendimento DOL nº ' + d.dol);
-  if (d.beneficio) ref.push('Benefício nº ' + d.beneficio);
-  if (d.contrato) ref.push('Contrato nº ' + d.contrato);
-  if (ref.length) P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Referência: ', b: true }, { t: ref.join(' · ') + '.' }], antesBase: 60, depois: 0 });
-  P.push({ estilo: 'OficioCorpo', runs: [{ t: 'Senhor(a) Gerente Executivo(a),' }], antesBase: 300 });
-  P.push({ runs: [{ t: 'A Defensoria Pública do Estado de São Paulo, no exercício de suas atribuições constitucionais e legais de prestação de assistência jurídica integral e gratuita (art. 134 da Constituição Federal e Lei Complementar Estadual nº 988/2006) e com fundamento no art. 128, X, da Lei Complementar nº 80/1994, dirige-se a Vossa Senhoria para solicitar o que segue em favor de ' }, { t: d.assistido || '[NOME]', b: true }, { t: ', CPF nº ' + (d.cpf || '[CPF]') + '.' }], jc: J, recuo: R });
-  P.push({ runs: [{ t: (d.relato && d.relato.trim()) || 'O(A) assistido(a) compareceu a esta unidade relatando situação relativa a descontos vinculados ao seu benefício previdenciário, o que torna necessária a verificação dos lançamentos para análise de regularidade e resguardo de sua subsistência.' }], jc: J, recuo: R });
-  if (d.vulnerabilidade && d.vulnerabilidade.trim()) P.push({ runs: [{ t: d.vulnerabilidade.trim() }], jc: J, recuo: R });
+  if (d.dol) ref.push('atendimento DOL nº ' + d.dol);
+  if (d.beneficio) ref.push('benefício nº ' + d.beneficio);
+  var T = [];
+  T.push({ runs: [{ t: 'A Defensoria Pública do Estado de São Paulo, no exercício de suas atribuições constitucionais e legais de prestação de assistência jurídica integral e gratuita (art. 134 da Constituição Federal e Lei Complementar Estadual nº 988/2006) e com fundamento no art. 128, X, da Lei Complementar nº 80/1994, solicita a Vossa Senhoria o que segue em favor de ' }, { t: d.assistido || '[NOME]', b: true }, { t: ', CPF nº ' + (d.cpf || '[CPF]') + (ref.length ? ' (' + ref.join(', ') + ')' : '') + '.' }] });
+  T.push({ runs: [{ t: (d.relato && d.relato.trim()) || 'O(A) assistido(a) compareceu a esta unidade relatando situação relativa a descontos vinculados ao seu benefício previdenciário, o que torna necessária a verificação dos lançamentos para análise de regularidade e resguardo de sua subsistência.' }] });
+  if (d.vulnerabilidade && d.vulnerabilidade.trim()) T.push({ runs: [{ t: d.vulnerabilidade.trim() }] });
   var itens = dxItens(d.itens || []);
   var runs = [{ t: 'Assim, solicita-se a Vossa Senhoria' + (pz ? ', no prazo de ' : '') }];
   if (pz) runs.push({ t: pz, b: true });
-  runs.push({ t: ': ' });
-  itens.forEach(function (it, i) { runs.push({ t: it.letra + ' ', b: true }); runs.push({ t: it.texto + (i < itens.length - 1 ? '; ' : '.') }); });
-  P.push({ runs: runs, jc: J, recuo: R });
+  runs.push({ t: (d.contrato ? ', em especial quanto ao contrato nº ' + d.contrato : '') + ': ' });
+  itens.forEach(function (it, i) { runs.push({ t: it.letra + ' ' + it.texto + (i < itens.length - 1 ? '; ' : '.') }); });
+  T.push({ runs: runs });
   if (d.justificativa && d.justificativa.trim()) {
     var j = d.justificativa.trim().replace(/\.+$/, '');
-    P.push({ runs: [{ t: 'O prazo indicado considera as circunstâncias do caso: ' + j.charAt(0).toLowerCase() + j.slice(1) + '.' }], jc: J, recuo: R });
+    T.push({ runs: [{ t: 'O prazo indicado considera as circunstâncias do caso: ' + j.charAt(0).toLowerCase() + j.slice(1) + '.' }] });
   }
-  P.push({ runs: [{ t: 'As informações e os documentos poderão ser encaminhados ao endereço eletrônico institucional desta unidade (' + u.email + ')' + (d.dol ? ', com referência ao DOL nº ' + d.dol : '') + ', ou disponibilizados para retirada pelo portador deste expediente. Solicita-se, por fim, a habitual colaboração dessa Autarquia.' }], jc: J, recuo: R });
-  P.push({ estilo: 'OficioFecho', runs: [{ t: 'Atenciosamente,' }], antesBase: 200, depoisBase: 560 });
-  P.push({ assinaturas: [[d.signatario || '[NOME DO(A) SIGNATÁRIO(A)]', d.cargo || '[CARGO]', u.cab1]] });
+  T.push({ runs: [{ t: 'As informações e os documentos poderão ser encaminhados ao endereço eletrônico institucional desta unidade (' + u.email + ')' + (d.dol ? ', com referência ao DOL nº ' + d.dol : '') + ', ou disponibilizados para retirada pelo portador deste expediente.' }] });
+  P = P.concat(dxNumerar(T));
+  dxFechoEAssinaturas(P, [[dxNomeSignatario(d.signatario), d.cargo || '[Cargo]']]);
   return P;
 }
 
-/* ── TERMO DE AUTORIZAÇÃO EXPRESSA ───────────────────────────────────────── */
+/* ── TERMO DE AUTORIZAÇÃO EXPRESSA ─────────────────────────────────────────
+   Não é ofício: título centralizado, texto com recuo de 2,5 cm, local e data e
+   linha para a assinatura do(a) assistido(a). */
 function dxAutorizacao(d) {
   var u = d.unidade || unidadeCarregar(), dt = dxDataExtenso(d.dataIso), P = [];
-  var J = 'both', R = 567, nome = (d.nome || '[NOME COMPLETO]').toUpperCase();
-  P.push({ estilo: 'OficioCorpo', runs: [{ t: 'TERMO DE AUTORIZAÇÃO EXPRESSA E AFASTAMENTO DE SIGILO BANCÁRIO', b: true }], jc: 'center', antesBase: 360, depoisBase: 380 });
+  var J = 'both', R = DX_RECUO, nome = (d.nome || '[NOME COMPLETO]').toLocaleUpperCase('pt-BR');
+  P.push({ estilo: 'OficioCorpo', runs: [{ t: 'TERMO DE AUTORIZAÇÃO EXPRESSA E AFASTAMENTO DE SIGILO BANCÁRIO', b: true }], jc: 'center', antesBase: 360, depoisBase: 360 });
   var ref = [];
   if (d.dol) ref.push('Atendimento DOL nº ' + d.dol);
   if (d.instituicao) ref.push('Instituição: ' + d.instituicao);
   if (d.contrato) ref.push('Contrato nº ' + d.contrato);
-  if (ref.length) P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Referência: ', b: true }, { t: ref.join(' · ') + '.' }], depoisBase: 240 });
-  P.push({ runs: [{ t: 'Eu, ' }, { t: nome, b: true }, { t: ', inscrito(a) no CPF sob o nº ' + (d.cpf || '[CPF]') + ', pelo presente instrumento, ' }, { t: 'AUTORIZO EXPRESSAMENTE', b: true }, { t: ' toda e qualquer instituição financeira, de pagamento, cooperativa de crédito ou entidade equiparada pertencente ao Sistema Financeiro Nacional a fornecer à ' }, { t: 'DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO - ' + u.cab1.toUpperCase(), b: true }, { t: ' todas as informações, extratos e cópias de documentos referentes a operações de crédito, especialmente empréstimos (pessoais e/ou consignados), financiamentos e cartões, firmados em meu nome.' }], jc: J, recuo: R });
+  if (ref.length) P.push({ estilo: 'OficioAssunto', runs: [{ t: 'Referência: ', b: true }, { t: ref.join('; ') + '.' }], depoisBase: 240 });
+  P.push({ runs: [{ t: 'Eu, ' }, { t: nome, b: true }, { t: ', inscrito(a) no CPF sob o nº ' + (d.cpf || '[CPF]') + ', pelo presente instrumento, ' }, { t: 'AUTORIZO EXPRESSAMENTE', b: true }, { t: ' toda e qualquer instituição financeira, de pagamento, cooperativa de crédito ou entidade equiparada pertencente ao Sistema Financeiro Nacional a fornecer à ' }, { t: 'DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO - ' + u.cab1.toLocaleUpperCase('pt-BR'), b: true }, { t: ' todas as informações, extratos e cópias de documentos referentes a operações de crédito, especialmente empréstimos (pessoais e/ou consignados), financiamentos e cartões, firmados em meu nome.' }], jc: J, recuo: R });
   P.push({ runs: [{ t: 'Declaro que a presente autorização abrange o acesso a contratos, faturas, históricos e quaisquer movimentações financeiras relacionadas ao caso em apuração, implicando a renúncia expressa ao sigilo bancário para esta finalidade específica, nos termos do artigo 1º, § 3º, inciso V, da Lei Complementar nº 105/2001.' }], jc: J, recuo: R });
   P.push({ runs: [{ t: 'Ademais, consinto de forma livre, informada e inequívoca com o tratamento e o compartilhamento dos meus dados pessoais e financeiros, em conformidade com o artigo 7º, incisos I e VI, da Lei nº 13.709/2018 (Lei Geral de Proteção de Dados - LGPD), exclusivamente para fins de instrução de procedimento administrativo e/ou judicial promovido pela Defensoria Pública.' }], jc: J, recuo: R });
   P.push({ runs: [{ t: 'Reconheço que a Defensoria Pública do Estado de São Paulo encontra-se autorizada a representar-me junto a qualquer instituição do sistema financeiro para a prática dos atos necessários à obtenção dessas informações, nos termos da Lei Complementar Federal nº 80/1994 e da Lei Complementar Estadual nº 988/2006.' }], jc: J, recuo: R });
   P.push({ runs: [{ t: 'Por ser a expressão da verdade e por manifestar a minha livre e espontânea vontade, firmo o presente termo para que produza seus regulares efeitos legais.' }], jc: J, recuo: R });
-  P.push({ estilo: 'OficioData', runs: [{ t: u.cidade + '/SP, ' + dt.texto + '.' }], jc: 'right', antesBase: 300, depoisBase: 900 });
-  P.push({ estilo: 'OficioAssinatura', runs: [{ t: '_____________________________________________' }], jc: 'center', depois: 0 });
-  P.push({ estilo: 'OficioAssinatura', runs: [{ t: nome, b: true }], jc: 'center', depois: 0 });
+  P.push({ estilo: 'OficioData', runs: [{ t: String(u.cidade || '').replace(/\s*\/\s*[A-Z]{2}$/, '') + ', ' + dt.texto + '.' }], jc: 'right', antesBase: 300, depoisBase: 1100, depoisMin: 720, manter: true });
+  P.push({ estilo: 'OficioAssinatura', runs: [{ t: '_____________________________________________' }], jc: 'center', depois: 0, manter: true });
+  P.push({ estilo: 'OficioAssinatura', runs: [{ t: nome }], jc: 'center', depois: 0, manter: true });
   P.push({ estilo: 'OficioAssinatura', runs: [{ t: 'CPF nº ' + (d.cpf || '[CPF]') }], jc: 'center', depois: 0 });
   return P;
 }
@@ -325,16 +378,21 @@ async function dxGerarBlob(pars, opcoes) {
   if (typeof B64_BASE_V13 === 'undefined' || !B64_BASE_V13 || B64_BASE_V13.length < 100) throw new Error('Modelo-base dos documentos não carregado.');
   opcoes = opcoes || {};
   var u = opcoes.unidade || unidadeCarregar();
-  var aj = dxAjustar(pars, opcoes.nivel);
+  var aj = dxAjustar(pars, { padrao: opcoes.padrao || u.padrao, nivel: opcoes.nivel });
   var bin = atob(B64_BASE_V13), bytes = new Uint8Array(bin.length);
   for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   var zip = await JSZip.loadAsync(bytes);
   var doc = await zip.file('word/document.xml').async('string');
   var marca = '<w:p><w:r><w:t>{{CORPO}}</w:t></w:r></w:p>';
   if (doc.indexOf(marca) === -1) throw new Error('Marcador do corpo não encontrado no modelo-base.');
-  zip.file('word/document.xml', doc.replace(marca, dxCorpoXml(aj)));
+  var M = DX_MARGENS;
+  doc = doc.replace(marca, dxCorpoXml(aj)).replace(/<w:pgMar [^>]*\/>/, '<w:pgMar w:top="' + M.top + '" w:right="' + M.right + '" w:bottom="' + M.bottom + '" w:left="' + M.left + '" w:header="' + M.header + '" w:footer="' + M.footer + '" w:gutter="0"/>');
+  zip.file('word/document.xml', doc);
+  var larg = 11906 - M.left - M.right;
   var cab = await zip.file('word/header1.xml').async('string');
-  zip.file('word/header1.xml', cab.replace('{{CAB1}}', dxEsc(u.cab1)).replace('{{CAB2}}', dxEsc(u.cab2)));
+  cab = cab.replace('{{CAB1}}', dxEsc(u.cab1)).replace('{{CAB2}}', dxEsc(u.cab2))
+    .replace('<w:tblW w:w="9298"', '<w:tblW w:w="' + larg + '"').split('w:w="3883"').join('w:w="' + (larg - 5415) + '"');
+  zip.file('word/header1.xml', cab);
   var rod = await zip.file('word/footer1.xml').async('string'), rl = unidadeRodape(u);
   zip.file('word/footer1.xml', rod.replace('{{ROD1}}', dxEsc(rl[0])).replace('{{ROD2}}', dxEsc(rl[1])));
   var blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });

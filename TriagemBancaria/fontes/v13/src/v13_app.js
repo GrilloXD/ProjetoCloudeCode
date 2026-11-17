@@ -134,31 +134,55 @@ function casoDaTriagem() {
 }
 
 /* ════════ 3. PRIORIDADES, VULNERABILIDADES E PRAZO ═══════════════════ */
+/* Escolha em lista clicável (mesmo comportamento da lista de instituições): cada item escolhido vira uma etiqueta removível. */
+var VULN_CURTO = { prioridade: 'Prioridade legal', vulnerabilidade: 'Vulnerabilidade', atencao: 'Atenção' };
+/* Termos de busca extras (só para achar o item na lista; não entram nos documentos). */
+var VULN_BUSCA = { idoso: 'idoso idosa terceira idade aposentado', idoso80: 'idoso idosa oitenta 80', pcd: 'deficiente deficiencia pcd cadeirante autista',
+  doenca: 'doente doenca grave tratamento cancer', socio: 'baixa renda pobreza cadunico bolsa familia bpc', analf: 'analfabeto analfabeta leitura escrever compreensao',
+  digital: 'celular aplicativo internet app', super: 'superendividamento superendividado dividas', renda: 'descontos salario beneficio margem renda',
+  risco: 'risco social violencia rua abrigo' };
 function vulnRender() {
   var box = $id('caso-vuln'); if (!box) return;
-  box.innerHTML = VULN.map(function (v) {
-    return '<label id="vl-' + v.id + '"><input type="checkbox" value="' + v.id + '" onchange="vulnToggle()"><span><strong>' + v13Esc(v.rot) + '</strong>'
-      + '<small><span class="v13-tag ' + v.classe + '">' + VULN_CLASSES[v.classe] + '</span></small></span></label>';
+  box.innerHTML = CASO.vuln.map(function (id) {
+    var v = vulnPorId(id); if (!v) return '';
+    return '<span class="v13-chip" title="' + v13Esc(VULN_CLASSES[v.classe]) + '"><span>' + v13Esc(v.rot) + '</span><i>' + VULN_CURTO[v.classe] + '</i>'
+      + '<button type="button" aria-label="Remover: ' + v13Esc(v.rot) + '" onclick="vulnRemover(\'' + v.id + '\')">&times;</button></span>';
   }).join('');
 }
-function vulnToggle() {
-  var ids = [];
-  document.querySelectorAll('#caso-vuln input[type=checkbox]').forEach(function (c) { var l = c.closest('label'); if (l) l.classList.toggle('on', c.checked); if (c.checked) ids.push(c.value); });
-  CASO.vuln = ids; CASO.vulnOutra = v13Val('caso-vuln-outra');
-  if (typeof S !== 'undefined') S.perfil = ids.slice();
-  vulnPrevia(); casoResumo();
+function vulnFiltrar() {
+  var input = $id('caso-vuln-busca'), box = $id('combo-caso-vuln-busca-list'); if (!input || !box) return;
+  var q = _normTxt(input.value.trim());
+  var lista = VULN.filter(function (v) { return CASO.vuln.indexOf(v.id) === -1 && (!q || _normTxt(v.rot + ' ' + VULN_CLASSES[v.classe] + ' ' + (VULN_BUSCA[v.id] || '')).indexOf(q) !== -1); });
+  _comboIdx['caso-vuln-busca'] = -1;
+  box.innerHTML = lista.length ? lista.map(function (v) {
+    return '<div class="combo-item" role="option" data-val="' + v.id + '" onmousedown="event.preventDefault(); comboSelecionar(\'caso-vuln-busca\', this)"><span class="v13-ci-classe">' + VULN_CURTO[v.classe] + '</span>' + v13Esc(v.rot) + '</div>';
+  }).join('') : '<div class="combo-empty">' + (CASO.vuln.length === VULN.length ? 'Todas as condições da lista já foram escolhidas.' : 'Nenhuma condição da lista com esse termo. Use o campo "Outra condição relevante".') + '</div>';
+  box.style.display = 'block';
 }
-function casoSetVuln(ids) {
-  document.querySelectorAll('#caso-vuln input[type=checkbox]').forEach(function (c) { c.checked = ids.indexOf(c.value) !== -1; });
-  vulnToggle();
+function vulnTeclado(e) {
+  var input = $id('caso-vuln-busca');
+  if (e.key === 'Backspace' && input && !input.value && CASO.vuln.length) { vulnRemover(CASO.vuln[CASO.vuln.length - 1]); return; }
+  if ((e.key === 'ArrowDown' || e.key === 'Enter') && $id('combo-caso-vuln-busca-list').style.display !== 'block') vulnFiltrar();
+  comboTeclado(e, 'caso-vuln-busca');
 }
+function vulnAdicionar(id) { if (vulnPorId(id) && CASO.vuln.indexOf(id) === -1) { CASO.vuln.push(id); vulnAtualizar(); } }
+function vulnRemover(id) { CASO.vuln = CASO.vuln.filter(function (x) { return x !== id; }); vulnAtualizar(); if ($id('combo-caso-vuln-busca-list') && $id('combo-caso-vuln-busca-list').style.display === 'block') vulnFiltrar(); }
+function vulnAtualizar() {
+  var sel = CASO.vuln;
+  CASO.vuln = VULN.map(function (v) { return v.id; }).filter(function (id) { return sel.indexOf(id) !== -1; });
+  CASO.vulnOutra = v13Val('caso-vuln-outra');
+  if (typeof S !== 'undefined') S.perfil = CASO.vuln.slice();
+  vulnRender(); vulnPrevia(); prazoChange();
+}
+function vulnToggle() { CASO.vulnOutra = v13Val('caso-vuln-outra'); vulnPrevia(); casoResumo(); }
+function casoSetVuln(ids) { CASO.vuln = (ids || []).filter(function (id) { return !!vulnPorId(id); }); vulnAtualizar(); }
 function vulnPrevia() {
   var box = $id('caso-vuln-previa'); if (!box) return;
   var b = vulnParagrafo(CASO.vuln, CASO.vulnOutra, 'banco'), i = vulnParagrafo(CASO.vuln, CASO.vulnOutra, 'inss');
   var conf = CASO.vuln.map(function (id) { var v = vulnPorId(id); return v ? '<li><span class="v13-tag ' + v.classe + '">' + VULN_CLASSES[v.classe] + '</span><b>' + v13Esc(v.rot) + ':</b> ' + v13Esc(v.conferir) + '</li>' : ''; }).join('');
   box.innerHTML = b ? '<b>Texto que entra no ofício à instituição:</b> ' + v13Esc(b) + '<br><br><b>No ofício ao INSS:</b> ' + v13Esc(i)
     + (conf ? '<br><br><b>O que conferir no atendimento:</b><ul style="margin:6px 0 0 16px;">' + conf + '</ul>' : '')
-    : 'Nenhuma condição marcada: os documentos saem sem o parágrafo de prioridade. Marque as condições que se aplicam ao caso.';
+    : 'Nenhuma condição escolhida: os documentos saem sem o parágrafo de prioridade. Escolha na lista as condições que se aplicam ao caso.';
 }
 function prazoAtual() {
   var sel = v13Val('caso-prazo') || '10';
@@ -298,26 +322,42 @@ function validarDoc(tipo, d) {
 }
 function docPrevisualizar(tipo) {
   var d = dadosDoc(tipo), av = validarDoc(tipo, d); if (av === null) return;
-  var pars = parsDoc(tipo, d), aj = dxAjustar(pars);
+  var pars = parsDoc(tipo, d), aj = dxAjustar(pars, { padrao: d.unidade.padrao });
   var modal = $id('v13-prev-modal'); modal.dataset.tipo = tipo;
-  $id('v13-prev-fit').innerHTML = (aj.cabe ? '✓ Cabe em <b>uma página</b> com <b>' + aj.nivel.rotulo + '</b>.' : '⚠ <b>O conteúdo passa de uma página</b> mesmo com a fonte mínima. Desmarque itens ou encurte o relato.')
-    + (aj.nivel.id > 0 && aj.cabe ? ' A fonte foi ajustada para manter o documento em uma página.' : '')
-    + (av.length ? '<br><span style="color:#92400e;">Atenção: ' + av.join(' · ') + '.</span>' : '');
+  var sel = $id('v13-prev-padrao');
+  if (sel) { if (!sel.options.length) sel.innerHTML = docOpcoesPadrao(); sel.value = aj.padrao; }
+  $id('v13-prev-fit').innerHTML = (aj.cabe ? 'Cabe em <b>uma página</b> com <b>' + aj.nivel.rotulo + '</b>.' : '<b>O conteúdo passa de uma página</b> mesmo com a fonte mínima. Desmarque itens ou encurte o relato.')
+    + (aj.nivel.id > 0 && aj.cabe ? ' A fonte foi reduzida para manter o documento em uma página.' : '')
+    + (av.length ? '<br><span style="color:#74521a;">Atenção: ' + av.join('; ') + '.</span>' : '');
   $id('v13-prev-page').innerHTML = docHtmlPagina(aj, d.unidade);
   modal.classList.add('show'); docEscalar();
 }
+function docOpcoesPadrao() {
+  return Object.keys(DX_PADROES).map(function (k) { return '<option value="' + k + '">' + v13Esc(DX_PADROES[k].rotulo) + '</option>'; }).join('');
+}
+function docTrocarPadrao(v) {
+  if (!DX_PADROES[v]) return;
+  var u = unidadeCarregar(); u.padrao = v; v13LsSet(UNIDADE_KEY, u);
+  if ($id('un-padrao')) $id('un-padrao').value = v;
+  unidadePrevia();
+  var modal = $id('v13-prev-modal');
+  if (modal && modal.classList.contains('show') && modal.dataset.tipo) docPrevisualizar(modal.dataset.tipo);
+  v13Toast('Padrão dos documentos: ' + DX_PADROES[v].rotulo + '. Fica salvo neste navegador.');
+}
+/* Pré-visualização em escala real (A4 a 96 dpi): timbre, margens do Manual (3 cm, 1,5 cm, 2 cm) e rodapé da unidade. */
 function docHtmlPagina(aj, u) {
-  var nv = aj.nivel, fam = nv.fonte === 'Helvetica' ? 'Arial,Helvetica,sans-serif' : "'" + nv.fonte + "',serif";
+  var nv = aj.nivel, fam = nv.fonte === 'Helvetica' ? 'Arial,Helvetica,sans-serif' : (nv.fonte === 'Calibri' ? 'Calibri,Carlito,sans-serif' : "'" + nv.fonte + "',serif");
+  var lh = (DX_ALTURA_FONTE[nv.medir] || 1.15);
   var corpo = aj.pars.map(function (p) {
-    if (p.assinaturas) return '<div class="v13-a4-ass">' + p.assinaturas.map(function (b) { return '<div>' + b.map(function (l, i) { return i === 0 ? '<b>' + v13Esc(l) + '</b>' : v13Esc(l); }).join('<br>') + '</div>'; }).join('') + '</div>';
+    if (p.assinaturas) return '<div class="v13-a4-ass" style="line-height:' + lh + ';">' + p.assinaturas.map(function (b) { return '<div>' + b.map(function (l) { return v13Esc(l); }).join('<br>') + '</div>'; }).join('') + '</div>';
     var st = 'text-align:' + (p.jc === 'both' ? 'justify' : (p.jc || 'left')) + ';margin:' + ((p.antes || 0) / 20) + 'pt 0 ' + ((p.depois == null ? nv.depois : p.depois) / 20) + 'pt;'
-      + (p.recuo ? 'text-indent:' + (p.recuo / 20) + 'pt;' : '') + 'line-height:' + (p.linha || nv.entre) * 1.15 + ';';
+      + (p.recuo ? 'text-indent:' + (p.recuo / 20) + 'pt;' : '') + 'line-height:' + (p.linha || nv.entre) * lh + ';';
     return '<p style="' + st + '">' + (p.runs || []).map(function (r) { return r.b ? '<b>' + v13Esc(r.t) + '</b>' : v13Esc(r.t); }).join('') + '</p>';
   }).join('');
   var rod = unidadeRodape(u), logo = ($id('v13-logo-pos') || {}).src || '';
   return '<div class="v13-a4" style="font-family:' + fam + ';font-size:' + nv.pt + 'pt;">'
     + '<div class="v13-a4-cab"><img src="' + logo + '" alt="Defensoria Pública do Estado de São Paulo"><div>' + v13Esc(u.cab1) + '<br>' + v13Esc(u.cab2) + '</div></div>'
-    + '<div class="v13-a4-corpo">' + corpo + '</div><div class="v13-a4-rod">' + v13Esc(rod[0]) + '<br>' + v13Esc(rod[1]) + '</div></div>';
+    + '<div class="v13-a4-corpo">' + corpo + '</div><div class="v13-a4-rod"><div>' + v13Esc(rod[0]) + '<br>' + v13Esc(rod[1]) + '</div></div></div>';
 }
 function docEscalar() {
   var wrap = $id('v13-prev-page'), pg = wrap ? wrap.querySelector('.v13-a4') : null; if (!pg) return;
@@ -492,9 +532,20 @@ function instImportar(inp) {
 }
 
 /* ════════ 8. CONFIGURAÇÕES DA UNIDADE (cabeçalho e rodapé) ═══════════ */
-var UN_CAMPOS = ['cab1', 'cab2', 'cidade', 'sigla', 'endereco', 'telefone', 'email', 'site'];
-function unidadeFormInit() { var u = unidadeCarregar(); UN_CAMPOS.forEach(function (k) { if ($id('un-' + k)) $id('un-' + k).value = u[k]; }); unidadePrevia(); }
-function unidadePrevia() { var u = {}; UN_CAMPOS.forEach(function (k) { u[k] = v13Val('un-' + k); }); var r = unidadeRodape(u); if ($id('un-previa')) $id('un-previa').innerHTML = '<b>Cabeçalho:</b> ' + v13Esc(u.cab1) + ' / ' + v13Esc(u.cab2) + '<br><b>Rodapé:</b> ' + v13Esc(r[0]) + '<br>' + v13Esc(r[1]); }
+var UN_CAMPOS = ['cab1', 'cab2', 'cidade', 'sigla', 'endereco', 'telefone', 'email', 'site', 'padrao'];
+function unidadeFormInit() {
+  var u = unidadeCarregar(), sp = $id('un-padrao');
+  if (sp && !sp.options.length) sp.innerHTML = docOpcoesPadrao();
+  UN_CAMPOS.forEach(function (k) { if ($id('un-' + k)) $id('un-' + k).value = u[k]; });
+  unidadePrevia();
+}
+function unidadePrevia() {
+  var u = {}; UN_CAMPOS.forEach(function (k) { u[k] = v13Val('un-' + k); }); var r = unidadeRodape(u), p = DX_PADROES[u.padrao];
+  var dt = dxDataExtenso(''), sig = String(u.sigla || '').trim();
+  if ($id('un-previa')) $id('un-previa').innerHTML = '<b>Cabeçalho:</b> ' + v13Esc(u.cab1) + ' / ' + v13Esc(u.cab2) + '<br><b>Rodapé:</b> ' + v13Esc(r[0]) + '<br>' + v13Esc(r[1])
+    + '<br><b>Identificação:</b> OFÍCIO Nº 123456/' + dt.ano + (sig ? '/' + v13Esc(sig) : '') + ' · <b>Data:</b> ' + v13Esc(u.cidade) + ', ' + dt.texto + '.'
+    + (p ? '<br><b>Padrão de redação:</b> ' + v13Esc(p.rotulo) + '. Estrutura do padrão ofício do Manual de Redação da Presidência da República; se o texto não couber em uma página, a fonte é reduzida aos poucos.' : '');
+}
 function unidadeSalvar() { var u = {}; UN_CAMPOS.forEach(function (k) { u[k] = v13Val('un-' + k); }); if (!u.email || u.email.indexOf('@') === -1) { v13Toast('Informe um e-mail válido para as respostas.'); return; } v13LsSet(UNIDADE_KEY, u); unidadePrevia(); v13Toast('✓ Dados da unidade salvos neste navegador.'); }
 function unidadeRestaurar() { try { localStorage.removeItem(UNIDADE_KEY); } catch (e) {} unidadeFormInit(); v13Toast('Dados da unidade restaurados ao padrão (Ribeirão Preto).'); }
 
@@ -502,9 +553,9 @@ function unidadeRestaurar() { try { localStorage.removeItem(UNIDADE_KEY); } catc
 function v13AlertasSel() { return (typeof S !== 'undefined' && S.alertas) ? S.alertas.map(function (id) { return ALERTAS.filter(function (a) { return a.id === id; })[0]; }).filter(Boolean) : []; }
 function v13BannerAlertas() {
   var al = v13AlertasSel(); if (!al.length) return '';
-  return '<div class="v13-urg" role="alert"><div class="v13-urg-tit">🚨 URGÊNCIA — encaminhe ao(à) defensor(a) agora, sem esperar o fim da triagem</div><ul>'
+  return '<div class="v13-urg" role="alert"><div class="v13-urg-tit">Urgência: encaminhe ao(à) defensor(a) agora, sem esperar o fim da triagem</div><ul>'
     + al.map(function (a) { return '<li><strong>' + v13Esc(a.t) + ':</strong> ' + v13Esc(a.o) + '</li>'; }).join('')
-    + '</ul><div class="v13-urg-acoes"><button type="button" onclick="v13CopiarAvisoDefensor(this)">📋 Copiar aviso para o(a) defensor(a)</button>'
+    + '</ul><div class="v13-urg-acoes"><button type="button" onclick="v13CopiarAvisoDefensor(this)">Copiar aviso para o(a) defensor(a)</button>'
     + '<span style="font-size:11.5px;color:#7f1d1d;align-self:center;">Depois de avisar, você pode continuar a triagem normalmente.</span></div></div>';
 }
 function v13TriCaso(qId) { var b = $id('tri-caso'); if (b) b.style.display = qId === 'q_problema' ? '' : 'none'; }
@@ -561,7 +612,7 @@ function v13CenarioTopo(t, tId) {
   if (!perfil.length) return '';
   var grupos = { prioridade: [], vulnerabilidade: [], atencao: [] };
   perfil.forEach(function (id) { var v = vulnPorId(id); if (v) grupos[v.classe].push(v); });
-  var h = '<div class="v13-bloco"><h4>⭐ Prioridades e vulnerabilidades do caso</h4>';
+  var h = '<div class="v13-bloco"><h4>Prioridades e vulnerabilidades do caso</h4>';
   Object.keys(grupos).forEach(function (c) {
     if (!grupos[c].length) return;
     h += '<p style="font-size:12px;font-weight:700;color:var(--dp-verde);margin:8px 0 4px;"><span class="v13-tag ' + c + '">' + VULN_CLASSES[c] + '</span></p><ul>';
@@ -572,7 +623,7 @@ function v13CenarioTopo(t, tId) {
 }
 function v13CenarioAnalise(t, tId) {
   var of = ofModalidade(v13OfDoTerminal(tId, t)), calc = v13CalcDoTerminal(tId, t);
-  var h = '<div class="v13-bloco"><h4>🔎 Depende de análise individual</h4><ul>' + v13Analise(tId, t).map(function (x) { return '<li>' + v13Esc(x) + '</li>'; }).join('') + '</ul>'
+  var h = '<div class="v13-bloco"><h4>Depende de análise individual</h4><ul>' + v13Analise(tId, t).map(function (x) { return '<li>' + v13Esc(x) + '</li>'; }).join('') + '</ul>'
     + '<div class="v13-nota">O sistema aponta <strong>possíveis irregularidades e o que conferir</strong>; não presume abusividade nem substitui a análise do(a) defensor(a). Leia as seções como: <b>fundamentos legais aplicáveis</b> (normas), <b>teses jurídicas possíveis</b> (argumentos a avaliar), <b>análise individual</b> (pontos do caso concreto) e <b>confirmação documental</b> (o que precisa de prova).</div></div>';
   h += '<div class="v13-acoes-cen"><button class="btn-p" onclick="irParaDocumentosPrefill()">📄 Preparar ofício: ' + v13Esc(of.rot) + '</button>'
     + (calc ? '<button class="btn-s" onclick="v13AbrirCalc(\'' + calc + '\')">🧮 Abrir a calculadora nesta modalidade</button>' : '')
@@ -753,6 +804,7 @@ function v13RenderTetos() {
 /* ════════ 12. INICIALIZAÇÃO ═════════════════════════════════════════ */
 var _v13ComboSelOrig = comboSelecionar;
 comboSelecionar = function (inputId, el) {
+  if (inputId === 'caso-vuln-busca') { var inp = $id(inputId); vulnAdicionar(el.getAttribute('data-val')); inp.value = ''; vulnFiltrar(); inp.focus(); return; }
   _v13ComboSelOrig(inputId, el);
   var k = casoCampoDe(inputId); if (k) casoSet(k, $id(inputId).value, inputId);
   if (inputId === 'caso-instituicao' || inputId === 'cen-banco') ofAtualizarEndereco(true);

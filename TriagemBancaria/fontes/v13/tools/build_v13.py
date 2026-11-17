@@ -40,14 +40,11 @@ def remove_obj(key):
     s = s[:m.start()] + s[k:]
 def b64file(p): return base64.b64encode(open(os.path.join(W, p), 'rb').read()).decode()
 
-# ── 1. <head>: título, fonte oficial (Figtree), CSS da identidade ──────────
+# ── 1. <head>: título, fontes da v12 (Libre Baskerville + DM Sans, pesos completos), CSS de acabamento ──
 rep('<title>Guia Avançado de Triagem Jurídica Bancária — Defensoria Pública SP</title>',
     '<title>Triagem Jurídica Bancária v13 — Defensoria Pública do Estado de São Paulo</title>\n<meta name="description" content="Ferramenta interna de apoio à triagem jurídica bancária e financeira — DPESP, Unidade de Ribeirão Preto. Versão 13.0.">')
 rep('<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">',
-    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">')
-n1 = s.count("'DM Sans',sans-serif"); n2 = s.count("'Libre Baskerville',serif")
-s = s.replace("'DM Sans',sans-serif", "'Figtree',sans-serif").replace("'Libre Baskerville',serif", "'Figtree',sans-serif")
-LOG.append('fontes substituídas: %d + %d' % (n1, n2))
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">')
 rep('\n</style>\n</head>', '\n' + rd('src/v13.css') + '\n</style>\n</head>')
 
 LOGO_NEG = 'data:image/svg+xml;base64,' + b64file('logo/dpesp-h-neg.svg')
@@ -60,7 +57,7 @@ rep('''    <div class="hdr-seal">⚖️</div>
       <p>Guia Avançado de Triagem Jurídica Bancária — Unidade Ribeirão Preto</p>
     </div>
     <div class="hdr-badge">Uso Interno · v12.1 · Atualizado em 12/07/2026</div><!-- ===NOVO=== v12.1 -->''',
-'''    <div class="hdr-logo"><img src="''' + LOGO_NEG + '''" alt="Defensoria Pública do Estado de São Paulo" width="227" height="34"></div>
+'''    <div class="hdr-logo"><img src="''' + LOGO_NEG + '''" alt="Defensoria Pública do Estado de São Paulo" width="214" height="32"></div>
     <div class="hdr-divisor" aria-hidden="true"></div>
     <div class="hdr-text">
       <h1>Triagem Jurídica Bancária</h1>
@@ -114,7 +111,7 @@ rep('''      <div id="qArea"></div>''',
       </div>
       <div id="qArea"></div>''')
 rep('''          <label style="font-size:11px;font-weight:700;color:var(--gd);display:block;margin-bottom:3px;">Banco/instituição identificado no relato <em class="opt">— opcional</em></label>
-          <input type="text" id="cen-banco" placeholder="Ex: Banco BMG S.A." style="border:1.5px solid var(--bdr);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Figtree',sans-serif;width:100%;">
+          <input type="text" id="cen-banco" placeholder="Ex: Banco BMG S.A." style="border:1.5px solid var(--bdr);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;width:100%;">
         </div>''',
 '''          <label style="font-size:11px;font-weight:700;color:var(--gd);display:block;margin-bottom:3px;">Instituição identificada no relato <em class="opt">— opcional</em></label>
           <div class="combo" id="combo-cen-banco"><input type="text" id="cen-banco" autocomplete="off" placeholder="Ex.: Banco BMG S.A." oninput="comboFiltrar('cen-banco')" onfocus="comboFiltrar('cen-banco')" onkeydown="comboTeclado(event,'cen-banco')" onblur="comboBlur('cen-banco')" style="border:1.5px solid var(--bdr);border-radius:8px;padding:8px 11px;font-size:13px;width:100%;"><div class="combo-list" id="combo-cen-banco-list"></div></div>
@@ -450,8 +447,9 @@ rep("""        <p class="ws-final">Bom atendimento! 💚<br><small>Sistema desen
 FOOT = '''<!-- v13: rodapé institucional -->
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <img id="v13-logo-pos" src="''' + LOGO_POS + '''" alt="Defensoria Pública do Estado de São Paulo" width="200" height="30">
-    <div class="site-footer-txt"><strong>Triagem Jurídica Bancária · v13.0</strong> — ferramenta interna de apoio da Unidade de Ribeirão Preto. Resultado preliminar: não substitui a análise do(a) defensor(a). Os dados do(a) assistido(a) não são salvos; preferências (e-mails institucionais, cadastro de instituições, dados da unidade) ficam só neste navegador.</div>
+    <img class="v13-ft-logo" src="''' + LOGO_NEG + '''" alt="Defensoria Pública do Estado de São Paulo" width="200" height="30">
+    <img id="v13-logo-pos" src="''' + LOGO_POS + '''" alt="" aria-hidden="true" width="200" height="30">
+    <div class="site-footer-txt"><strong>Triagem Jurídica Bancária · v13.0</strong><br>Ferramenta interna de apoio da Unidade de Ribeirão Preto. Resultado preliminar: não substitui a análise do(a) defensor(a). Os dados do(a) assistido(a) não são salvos; preferências (e-mails institucionais, cadastro de instituições, dados da unidade) ficam só neste navegador.</div>
   </div>
 </footer>
 
@@ -459,9 +457,10 @@ FOOT = '''<!-- v13: rodapé institucional -->
 <div class="v13-prev-modal" id="v13-prev-modal" role="dialog" aria-label="Revisão do documento" onclick="if(event.target===this)docFecharPrevia()">
   <div class="v13-prev-bar">
     <div class="fit" id="v13-prev-fit"></div>
-    <button class="btn-doc-dl" type="button" id="v13-prev-baixar" onclick="docGerar(document.getElementById('v13-prev-modal').dataset.tipo)">✨ Baixar .docx</button>
-    <button class="btn-doc-copy" type="button" onclick="docImprimirPrevia()">🖨 Imprimir / PDF</button>
-    <button class="btn-doc-copy" type="button" onclick="docFecharPrevia()">✕ Fechar</button>
+    <select id="v13-prev-padrao" class="v13-campo" style="width:auto;max-width:100%;padding:7px 10px;font-size:12px;" title="Padrão de redação" onchange="docTrocarPadrao(this.value)"></select>
+    <button class="btn-doc-dl" type="button" id="v13-prev-baixar" onclick="docGerar(document.getElementById('v13-prev-modal').dataset.tipo)">Baixar .docx</button>
+    <button class="btn-doc-copy" type="button" onclick="docImprimirPrevia()">Imprimir ou salvar em PDF</button>
+    <button class="btn-doc-copy" type="button" onclick="docFecharPrevia()">Fechar</button>
   </div>
   <div id="v13-prev-page"></div>
 </div>
