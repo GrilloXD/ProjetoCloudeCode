@@ -1,0 +1,23 @@
+{
+  "_fonte": "Tabela compilada em calculojuridico.com.br/tabela-inss-taxas-juros-consignado-credito (consulta em 16/11/2026). Linhas de 2008 a 2020 conferidas com a IN INSS/PRES 28/2008 consolidada no gov.br (arts. 13, II, e 16, III). Linhas de 2021 em diante ainda a conferir no DOU.",
+  "_unidade": "% ao mes; emprestimo = emprestimo consignado; cartao = cartao consignado (RMC) e cartao de beneficio (RCC)",
+  "tetos": [
+    {"inicio": "2008-05-19", "fim": "2015-08-16", "emprestimo": 2.50, "cartao": 3.50, "norma": "IN INSS/PRES 28, de 16/05/2008", "conferido_oficial": true},
+    {"inicio": "2015-08-17", "fim": "2017-12-28", "emprestimo": 2.14, "cartao": 3.06, "norma": "IN INSS/PRES 80, de 14/08/2015", "conferido_oficial": true},
+    {"inicio": "2017-12-29", "fim": "2020-03-18", "emprestimo": 2.08, "cartao": 3.00, "norma": "IN INSS/PRES 92, de 28/12/2017", "conferido_oficial": true},
+    {"inicio": "2020-03-19", "fim": "2021-12-09", "emprestimo": 1.80, "cartao": 2.70, "norma": "IN INSS/PRES 106, de 18/03/2020", "conferido_oficial": true},
+    {"inicio": "2021-12-10", "fim": "2022-12-12", "emprestimo": 2.14, "cartao": 3.06, "norma": "IN PRES/INSS 125, de 09/12/2021", "conferido_oficial": false},
+    {"inicio": "2022-12-13", "fim": "2023-03-14", "emprestimo": 2.14, "cartao": 3.06, "norma": "IN PRES/INSS 138, de 10/11/2022", "conferido_oficial": false},
+    {"inicio": "2023-03-15", "fim": "2023-03-29", "emprestimo": 1.70, "cartao": 2.62, "norma": "Resolucao CNPS 1.350, de 13/03/2023", "conferido_oficial": false},
+    {"inicio": "2023-03-30", "fim": "2023-08-20", "emprestimo": 1.97, "cartao": 2.89, "norma": "Resolucao CNPS 1.351, de 28/03/2023", "conferido_oficial": false},
+    {"inicio": "2023-08-21", "fim": "2023-10-15", "emprestimo": 1.91, "cartao": 2.83, "norma": "Resolucao CNPS 1.356, de 17/08/2023", "conferido_oficial": false},
+    {"inicio": "2023-10-23", "fim": "2023-12-12", "emprestimo": 1.84, "cartao": 2.73, "norma": "Resolucao CNPS 1.359, de 11/10/2023", "conferido_oficial": false},
+    {"inicio": "2023-12-13", "fim": "2024-01-23", "emprestimo": 1.80, "cartao": 2.67, "norma": "Resolucao CNPS 1.360, de 04/12/2023", "conferido_oficial": false},
+    {"inicio": "2024-01-24", "fim": "2024-03-10", "emprestimo": 1.76, "cartao": 2.61, "norma": "Resolucao CNPS 1.361, de 11/01/2024", "conferido_oficial": false},
+    {"inicio": "2024-03-11", "fim": "2024-05-07", "emprestimo": 1.72, "cartao": 2.55, "norma": "Resolucao CNPS 1.362, de 28/02/2024", "conferido_oficial": false},
+    {"inicio": "2024-05-08", "fim": "2024-06-04", "emprestimo": 1.68, "cartao": 2.49, "norma": "Resolucao CNPS 1.363, de 24/04/2024", "conferido_oficial": false},
+    {"inicio": "2024-06-05", "fim": "2025-01-16", "emprestimo": 1.66, "cartao": 2.46, "norma": "Resolucao CNPS 1.365, de 28/05/2024", "conferido_oficial": false},
+    {"inicio": "2025-01-17", "fim": "2025-04-03", "emprestimo": 1.80, "cartao": 2.46, "norma": "Resolucao CNPS 1.367, de 09/01/2025", "conferido_oficial": false},
+    {"inicio": "2025-04-04", "fim": null, "emprestimo": 1.85, "cartao": 2.46, "norma": "Resolucao CNPS 1.368, de 26/03/2025", "conferido_oficial": false, "obs": "Noticias de 10/2026 indicam teto ainda em 1,85%; havia reuniao do CNPS pautada para rever. Conferir antes de publicar."}
+  ]
+}
