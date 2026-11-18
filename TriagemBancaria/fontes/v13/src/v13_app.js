@@ -123,8 +123,11 @@ function casoResumo() {
   var pz = prazoAtual(), itens = [
     ['Assistido(a)', CASO.assistido, true], ['CPF', CASO.cpf, true], ['DOL', CASO.dol, false], ['Instituição', CASO.instituicao, false],
     ['Contrato', CASO.contrato, false], ['Prazo solicitado', pz ? dxPrazoTexto(pz) : 'sem prazo específico', false],
-    ['Prioridades', CASO.vuln.length ? CASO.vuln.map(function (i) { var v = vulnPorId(i); return v ? v.rot : i; }).join('; ') : 'nenhuma marcada', false]];
+    ['Prioridades', CASO.vuln.length ? CASO.vuln.map(function (i) { var v = vulnPorId(i); return v ? v.rot : i; }).join('; ') : 'nenhuma escolhida', false]];
   box.innerHTML = itens.map(function (x) { var falta = !x[1] && x[2]; return '<div class="' + (falta ? 'falta' : '') + '"><span>' + x[0] + '</span>' + (x[1] ? v13Esc(x[1]) : (falta ? 'falta preencher' : 'não informado')) + '</div>'; }).join('');
+  /* Resumo no cabeçalho do quadro, visível quando ele está recolhido */
+  var rs = $id('caso-acc-resumo');
+  if (rs) rs.textContent = [CASO.assistido, CASO.cpf ? 'CPF ' + CASO.cpf : '', CASO.dol ? 'DOL ' + CASO.dol : '', CASO.instituicao, CASO.vuln.length ? CASO.vuln.length + (CASO.vuln.length === 1 ? ' prioridade' : ' prioridades') : ''].filter(Boolean).join(' · ');
 }
 /* Copia os dados digitados na triagem para os demais campos */
 function casoDaTriagem() {
@@ -134,29 +137,38 @@ function casoDaTriagem() {
 }
 
 /* ════════ 3. PRIORIDADES, VULNERABILIDADES E PRAZO ═══════════════════ */
-/* Escolha em lista clicável (mesmo comportamento da lista de instituições): cada item escolhido vira uma etiqueta removível. */
+/* Escolha em lista clicável (mesmo comportamento da lista de instituições); as escolhidas formam um rol numerado. */
 var VULN_CURTO = { prioridade: 'Prioridade legal', vulnerabilidade: 'Vulnerabilidade', atencao: 'Atenção' };
 /* Termos de busca extras (só para achar o item na lista; não entram nos documentos). */
 var VULN_BUSCA = { idoso: 'idoso idosa terceira idade aposentado', idoso80: 'idoso idosa oitenta 80', pcd: 'deficiente deficiencia pcd cadeirante autista',
   doenca: 'doente doenca grave tratamento cancer', socio: 'baixa renda pobreza cadunico bolsa familia bpc', analf: 'analfabeto analfabeta leitura escrever compreensao',
   digital: 'celular aplicativo internet app', super: 'superendividamento superendividado dividas', renda: 'descontos salario beneficio margem renda',
   risco: 'risco social violencia rua abrigo' };
+/* Rol das condições escolhidas: lista numerada com a classe e a base legal principal de cada uma. */
 function vulnRender() {
   var box = $id('caso-vuln'); if (!box) return;
-  box.innerHTML = CASO.vuln.map(function (id) {
-    var v = vulnPorId(id); if (!v) return '';
-    return '<span class="v13-chip" title="' + v13Esc(VULN_CLASSES[v.classe]) + '"><span>' + v13Esc(v.rot) + '</span><i>' + VULN_CURTO[v.classe] + '</i>'
-      + '<button type="button" aria-label="Remover: ' + v13Esc(v.rot) + '" onclick="vulnRemover(\'' + v.id + '\')">&times;</button></span>';
-  }).join('');
+  if (!CASO.vuln.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="v13-rol-cab"><span>' + CASO.vuln.length + (CASO.vuln.length === 1 ? ' condição escolhida' : ' condições escolhidas') + '</span>'
+    + '<button type="button" onclick="casoSetVuln([])">Limpar todas</button></div>'
+    + CASO.vuln.map(function (id, i) {
+      var v = vulnPorId(id); if (!v) return '';
+      var base = v.fund && v.fund[0] ? String(v.fund[0][0]).split(' — ')[0] : '';
+      return '<div class="v13-rol-item"><span class="v13-rol-n">' + (i + 1) + '</span>'
+        + '<div class="v13-rol-txt"><strong>' + v13Esc(v.rot) + '</strong><small><i class="' + v.classe + '">' + VULN_CLASSES[v.classe] + '</i>' + v13Esc(base) + '</small></div>'
+        + '<button type="button" class="v13-rol-x" aria-label="Remover: ' + v13Esc(v.rot) + '" onclick="vulnRemover(\'' + v.id + '\')">Remover</button></div>';
+    }).join('');
 }
+/* Lista clicável: as condições já escolhidas aparecem marcadas; um clique marca ou desmarca. */
 function vulnFiltrar() {
   var input = $id('caso-vuln-busca'), box = $id('combo-caso-vuln-busca-list'); if (!input || !box) return;
   var q = _normTxt(input.value.trim());
-  var lista = VULN.filter(function (v) { return CASO.vuln.indexOf(v.id) === -1 && (!q || _normTxt(v.rot + ' ' + VULN_CLASSES[v.classe] + ' ' + (VULN_BUSCA[v.id] || '')).indexOf(q) !== -1); });
+  var lista = VULN.filter(function (v) { return !q || _normTxt(v.rot + ' ' + VULN_CLASSES[v.classe] + ' ' + (VULN_BUSCA[v.id] || '')).indexOf(q) !== -1; });
   _comboIdx['caso-vuln-busca'] = -1;
   box.innerHTML = lista.length ? lista.map(function (v) {
-    return '<div class="combo-item" role="option" data-val="' + v.id + '" onmousedown="event.preventDefault(); comboSelecionar(\'caso-vuln-busca\', this)"><span class="v13-ci-classe">' + VULN_CURTO[v.classe] + '</span>' + v13Esc(v.rot) + '</div>';
-  }).join('') : '<div class="combo-empty">' + (CASO.vuln.length === VULN.length ? 'Todas as condições da lista já foram escolhidas.' : 'Nenhuma condição da lista com esse termo. Use o campo "Outra condição relevante".') + '</div>';
+    var sel = CASO.vuln.indexOf(v.id) !== -1;
+    return '<div class="combo-item' + (sel ? ' v13-ci-sel' : '') + '" role="option" aria-selected="' + sel + '" data-val="' + v.id + '" onmousedown="event.preventDefault(); comboSelecionar(\'caso-vuln-busca\', this)">'
+      + '<span class="v13-ci-chk" aria-hidden="true"></span><span class="v13-ci-classe">' + VULN_CURTO[v.classe] + '</span>' + v13Esc(v.rot) + '</div>';
+  }).join('') : '<div class="combo-empty">Nenhuma condição da lista com esse termo. Use o campo "Outra condição relevante".</div>';
   box.style.display = 'block';
 }
 function vulnTeclado(e) {
@@ -348,11 +360,17 @@ function docTrocarPadrao(v) {
 function docHtmlPagina(aj, u) {
   var nv = aj.nivel, fam = nv.fonte === 'Helvetica' ? 'Arial,Helvetica,sans-serif' : (nv.fonte === 'Calibri' ? 'Calibri,Carlito,sans-serif' : "'" + nv.fonte + "',serif");
   var lh = (DX_ALTURA_FONTE[nv.medir] || 1.15);
+  var rh = function (rs) { return rs.map(function (r) { var t = v13Esc(r.t); if (r.link) t = '<u style="color:#0563c1;">' + t + '</u>'; if (r.pt || r.cond) t = '<span style="' + (r.pt ? 'font-size:' + r.pt + 'pt;' : '') + (r.cond ? 'letter-spacing:' + (r.cond / 20) + 'pt;' : '') + '">' + t + '</span>'; return r.b ? '<b>' + t + '</b>' : t; }).join(''); };
   var corpo = aj.pars.map(function (p) {
-    if (p.assinaturas) return '<div class="v13-a4-ass" style="line-height:' + lh + ';">' + p.assinaturas.map(function (b) { return '<div>' + b.map(function (l) { return v13Esc(l); }).join('<br>') + '</div>'; }).join('') + '</div>';
+    if (p.assinaturas) return '<div class="v13-a4-ass" style="line-height:' + lh + ';">' + p.assinaturas.map(function (b) { return '<div>' + b.map(function (l, i) { return i === 0 ? '<b>' + v13Esc(l) + '</b>' : v13Esc(l); }).join('<br>') + '</div>'; }).join('') + '</div>';
     var st = 'text-align:' + (p.jc === 'both' ? 'justify' : (p.jc || 'left')) + ';margin:' + ((p.antes || 0) / 20) + 'pt 0 ' + ((p.depois == null ? nv.depois : p.depois) / 20) + 'pt;'
       + (p.recuo ? 'text-indent:' + (p.recuo / 20) + 'pt;' : '') + 'line-height:' + (p.linha || nv.entre) * lh + ';';
-    return '<p style="' + st + '">' + (p.runs || []).map(function (r) { return r.b ? '<b>' + v13Esc(r.t) + '</b>' : v13Esc(r.t); }).join('') + '</p>';
+    var runs = p.runs || [], iTab = -1;
+    runs.forEach(function (r, i) { if (r.tab && iTab < 0) iTab = i; });
+    if (iTab < 0) return '<p style="' + st + '">' + rh(runs) + '</p>';
+    var antes = runs.slice(0, iTab), depois = runs.slice(iTab + 1);
+    if (p.tabs && p.tabs[0][0] === 'right') return '<p style="' + st + 'display:flex;justify-content:space-between;gap:12pt;"><span>' + rh(antes) + '</span><span>' + rh(depois) + '</span></p>';
+    return '<p style="' + st + '"><span style="display:inline-block;min-width:' + ((p.tabs ? p.tabs[0][1] : 567) / 20) + 'pt;">' + rh(antes) + '</span>' + rh(depois) + '</p>';
   }).join('');
   var rod = unidadeRodape(u), logo = ($id('v13-logo-pos') || {}).src || '';
   return '<div class="v13-a4" style="font-family:' + fam + ';font-size:' + nv.pt + 'pt;">'
@@ -543,8 +561,8 @@ function unidadePrevia() {
   var u = {}; UN_CAMPOS.forEach(function (k) { u[k] = v13Val('un-' + k); }); var r = unidadeRodape(u), p = DX_PADROES[u.padrao];
   var dt = dxDataExtenso(''), sig = String(u.sigla || '').trim();
   if ($id('un-previa')) $id('un-previa').innerHTML = '<b>Cabeçalho:</b> ' + v13Esc(u.cab1) + ' / ' + v13Esc(u.cab2) + '<br><b>Rodapé:</b> ' + v13Esc(r[0]) + '<br>' + v13Esc(r[1])
-    + '<br><b>Identificação:</b> OFÍCIO Nº 123456/' + dt.ano + (sig ? '/' + v13Esc(sig) : '') + ' · <b>Data:</b> ' + v13Esc(u.cidade) + ', ' + dt.texto + '.'
-    + (p ? '<br><b>Padrão de redação:</b> ' + v13Esc(p.rotulo) + '. Estrutura do padrão ofício do Manual de Redação da Presidência da República; se o texto não couber em uma página, a fonte é reduzida aos poucos.' : '');
+    + '<br><b>Identificação:</b> Ofício nº 123456/' + dt.ano + (sig ? '/' + v13Esc(sig) : '') + ' · <b>Data:</b> ' + v13Esc(u.cidade) + ', ' + dt.texto + '.'
+    + (p ? '<br><b>Padrão de redação:</b> ' + v13Esc(p.rotulo) + '. Formato dos modelos da unidade (número do parágrafo na margem, linha em branco entre os parágrafos, assinatura centralizada); se o texto não couber em uma página, a fonte é reduzida aos poucos.' : '');
 }
 function unidadeSalvar() { var u = {}; UN_CAMPOS.forEach(function (k) { u[k] = v13Val('un-' + k); }); if (!u.email || u.email.indexOf('@') === -1) { v13Toast('Informe um e-mail válido para as respostas.'); return; } v13LsSet(UNIDADE_KEY, u); unidadePrevia(); v13Toast('✓ Dados da unidade salvos neste navegador.'); }
 function unidadeRestaurar() { try { localStorage.removeItem(UNIDADE_KEY); } catch (e) {} unidadeFormInit(); v13Toast('Dados da unidade restaurados ao padrão (Ribeirão Preto).'); }
@@ -735,13 +753,16 @@ function v13ExtrasCalculo(tipo, td) {
   if (td.nota) mot.push('<em>' + v13Esc(td.nota) + '</em>');
   var pagas = parseInt(v13Val('ab-pagas'), 10) || 0, enc = parseMoeda(v13Val('ab-encargos'));
   if (c.grupo === 'price' && c.valor > 0 && c.prazo > 0) {
-    var i = c.contratada / 100, parc = c.calcContr ? c.calcContr.parcela : 0;
+    /* Juros pactuados (taxa nominal) sobre o valor financiado: é a base da parcela de juros e amortização,
+       do valor presente na quitação (Res. CMN 5.004/2022) e do custo dos encargos financiados. */
+    var usaNominal = !!(c.calcNominal && c.nominal > 0);
+    var i = (usaNominal ? c.nominal : c.contratada) / 100, parc = usaNominal ? c.calcNominal.parcela : (c.calcContr ? c.calcContr.parcela : 0);
     if (pagas > 0 && pagas < c.prazo && parc > 0) {
       var rest = c.prazo - pagas, saldo = parc * (1 - Math.pow(1 + i, -rest)) / i, semDesc = parc * rest;
-      extra += '<div class="calc-block-title" style="margin-top:8px;">💵 Quitação antecipada (estimativa)</div><div class="calc-block-grid">'
-        + '<div><span>Parcelas restantes</span><strong>' + rest + '</strong></div><div><span>Saldo estimado (CET do contrato)</span><strong>' + brl(saldo) + '</strong></div>'
+      extra += '<div class="calc-block-title" style="margin-top:8px;">Quitação antecipada (estimativa)</div><div class="calc-block-grid">'
+        + '<div><span>Parcelas restantes</span><strong>' + rest + '</strong></div><div><span>Saldo para quitar (taxa de juros do contrato)</span><strong>' + brl(saldo) + '</strong></div>'
         + '<div><span>Juros que deixam de ser pagos</span><strong class="val-ok">' + brl(semDesc - saldo) + '</strong></div></div>'
-        + '<div style="font-size:10.5px;color:var(--mi);margin-top:4px;">CDC, art. 52, § 2º: na liquidação antecipada, os juros e demais acréscimos são reduzidos proporcionalmente. Peça à instituição o valor oficial para quitação.</div>';
+        + '<div style="font-size:10.5px;color:var(--mi);margin-top:4px;">CDC, art. 52, § 2º: na liquidação antecipada, os juros e demais acréscimos são reduzidos proporcionalmente. Para pessoa física com taxa prefixada, o valor presente das parcelas é calculado pela taxa de juros pactuada (Resolução CMN 5.004/2022). Base: parcela de ' + brl(parc) + ' (juros de ' + (i * 100).toFixed(2).replace('.', ',') + '% a.m. sobre o valor financiado), sem seguro mensal à parte. Peça à instituição o valor oficial para quitação.</div>';
     }
     if (enc > 0 && enc < c.valor) {
       var fator = parc / c.valor, custo = enc * fator * c.prazo;
@@ -768,27 +789,7 @@ limparAbusividade = function () { ['ab-pagas', 'ab-encargos', 'ab-data-dia'].for
 function v13DiaOptions() { var s = $id('ab-data-dia'); if (!s || s.options.length > 1) return; for (var d = 1; d <= 31; d++) { var o = document.createElement('option'); o.value = String(d); o.textContent = String(d); s.appendChild(o); } }
 
 /* Consórcio — composição das parcelas e estimativa de restituição (Lei 11.795/2008) */
-function calcConsorcio() {
-  var cred = parseMoeda(v13Val('cs-credito')), prazo = parseInt(v13Val('cs-prazo'), 10) || 0, adm = parseMoeda(v13Val('cs-adm')), fr = parseMoeda(v13Val('cs-fr'));
-  var seg = parseMoeda(v13Val('cs-seg')), pagas = parseInt(v13Val('cs-pagas'), 10) || 0, atual = parseMoeda(v13Val('cs-bem-atual')), multa = parseMoeda(v13Val('cs-multa'));
-  var out = $id('cs-res'); if (!out) return;
-  if (!(cred > 0 && prazo > 0)) { out.innerHTML = '<div class="v13-info err">Informe o valor do crédito (carta) e o prazo do grupo em meses.</div>'; return; }
-  if (pagas > prazo) { out.innerHTML = '<div class="v13-info err">As parcelas pagas não podem passar do prazo do grupo.</div>'; return; }
-  var fc = cred / prazo, ta = cred * adm / 100 / prazo, frm = cred * fr / 100 / prazo, parcela = fc + ta + frm + seg;
-  var custoTotal = cred * (adm + fr) / 100 + seg * prazo, pctAmort = pagas / prazo * 100, refBem = atual > 0 ? atual : cred;
-  var restBruta = refBem * pctAmort / 100, desc = multa > 0 ? restBruta * multa / 100 : 0, rest = restBruta - desc;
-  var pagoTotal = parcela * pagas, admPaga = (ta) * pagas;
-  var cel = function (l, v, cls) { return '<div><span>' + l + '</span><strong' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</strong></div>'; };
-  out.innerHTML = '<div class="calc-block-title" style="margin-top:12px;">Composição da parcela</div><div class="v13-cons-res">'
-    + cel('Fundo comum', brl(fc)) + cel('Taxa de administração', brl(ta)) + cel('Fundo de reserva', brl(frm)) + cel('Seguro', brl(seg)) + cel('Parcela estimada', brl(parcela)) + '</div>'
-    + '<div class="calc-block-title" style="margin-top:12px;">Custo e situação da cota</div><div class="v13-cons-res">'
-    + cel('Custo das taxas no plano', brl(custoTotal) + ' (' + (custoTotal / cred * 100).toFixed(1).replace('.', ',') + '% do crédito)')
-    + cel('Total pago até agora', brl(pagoTotal)) + cel('Percentual amortizado', pctAmort.toFixed(2).replace('.', ',') + '%') + cel('Taxa de administração já paga', brl(admPaga)) + '</div>'
-    + (pagas > 0 ? '<div class="calc-block-title" style="margin-top:12px;">Restituição estimada ao excluído (art. 30)</div><div class="v13-cons-res">'
-      + cel('Percentual amortizado × valor do bem', brl(restBruta)) + (desc ? cel('Cláusula penal informada (' + multa.toFixed(2).replace('.', ',') + '%)', '− ' + brl(desc), 'val-danger') : '') + cel('Estimativa a restituir', brl(rest), 'val-ok') + '</div>' : '')
-    + '<div class="v13-info warn" style="margin-top:10px;">Estimativa para triagem. Pela Lei 11.795/2008 (art. 30), o excluído recebe o valor pago ao fundo comum calculado pelo percentual amortizado do valor do bem na data da assembleia de contemplação, com os rendimentos da aplicação; a taxa de administração, em regra, não é devolvida, e o saldo do fundo de reserva pode ser rateado no encerramento. A cláusula penal depende de previsão no contrato e a jurisprudência costuma exigir prova de prejuízo ao grupo (CDC, art. 53, § 2º). Confira os percentuais no contrato e no extrato da cota.</div>';
-}
-function limparConsorcio() { ['cs-credito', 'cs-prazo', 'cs-adm', 'cs-fr', 'cs-seg', 'cs-pagas', 'cs-bem-atual', 'cs-multa'].forEach(function (id) { if ($id(id)) $id(id).value = ''; }); if ($id('cs-res')) $id('cs-res').innerHTML = ''; }
+/* Consórcio e demais cálculos sem BACEN: ver v13_calc.js */
 
 /* ════════ 11. AJUDA: tabela de tetos ════════════════════════════════ */
 function v13RenderTetos() {
@@ -804,7 +805,7 @@ function v13RenderTetos() {
 /* ════════ 12. INICIALIZAÇÃO ═════════════════════════════════════════ */
 var _v13ComboSelOrig = comboSelecionar;
 comboSelecionar = function (inputId, el) {
-  if (inputId === 'caso-vuln-busca') { var inp = $id(inputId); vulnAdicionar(el.getAttribute('data-val')); inp.value = ''; vulnFiltrar(); inp.focus(); return; }
+  if (inputId === 'caso-vuln-busca') { var inp = $id(inputId), vid = el.getAttribute('data-val'); if (CASO.vuln.indexOf(vid) !== -1) vulnRemover(vid); else vulnAdicionar(vid); inp.value = ''; vulnFiltrar(); inp.focus(); return; }
   _v13ComboSelOrig(inputId, el);
   var k = casoCampoDe(inputId); if (k) casoSet(k, $id(inputId).value, inputId);
   if (inputId === 'caso-instituicao' || inputId === 'cen-banco') ofAtualizarEndereco(true);

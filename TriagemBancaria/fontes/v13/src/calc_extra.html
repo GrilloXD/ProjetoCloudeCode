@@ -1,0 +1,122 @@
+        <!-- ══ CONSÓRCIO (v13) — não depende do BACEN: não há juros nem taxa média de mercado ══ -->
+        <div class="calc-section" id="cs-consorcio">
+          <p class="v13-calc-intro">Consórcio não é empréstimo: não há juros nem taxa média do BACEN para comparar. O custo está na <strong>taxa de administração</strong>, no <strong>fundo de reserva</strong> e no <strong>seguro</strong> (Lei 11.795/2008). Por isso ele tem cálculo próprio: composição da parcela, custo das taxas, restituição ao excluído e uma <strong>simulação mês a mês</strong>.</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor do crédito (carta) — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="cs-credito" placeholder="Ex: 60.000,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Prazo do grupo (meses) <span class="req">*</span></label><input type="number" id="cs-prazo" min="1" placeholder="Ex: 80"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Taxa de administração total (%)</label><span class="hint">Percentual sobre o crédito, para todo o plano (contrato).</span><input type="text" inputmode="decimal" id="cs-adm" placeholder="Ex: 16,00" oninput="mascararTaxa(this)"></div>
+            <div class="calc-field"><label>Fundo de reserva total (%)</label><span class="hint">Se houver.</span><input type="text" inputmode="decimal" id="cs-fr" placeholder="Ex: 2,00" oninput="mascararTaxa(this)"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Seguro mensal (R$)</label><input type="text" inputmode="decimal" id="cs-seg" placeholder="Ex: 25,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Parcelas pagas</label><input type="number" id="cs-pagas" min="0" placeholder="Ex: 14"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor atual do bem de referência (R$) <em class="opt">— opcional</em></label><span class="hint">A restituição usa o valor do bem na data da assembleia; sem ele, usa o crédito informado.</span><input type="text" inputmode="decimal" id="cs-bem-atual" placeholder="Ex: 64.500,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Cláusula penal prevista (%) <em class="opt">— opcional</em></label><span class="hint">Só se prevista no contrato; costuma exigir prova de prejuízo ao grupo.</span><input type="text" inputmode="decimal" id="cs-multa" placeholder="Ex: 10,00" oninput="mascararTaxa(this)"></div>
+          </div>
+          <div class="v13-calc-sub">Simulação <span>opcional</span></div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Reajuste anual estimado do bem (%)</label><span class="hint">A parcela acompanha o valor do bem. Use 0 para simular sem reajuste.</span><input type="text" inputmode="decimal" id="cs-reaj" placeholder="Ex: 4,50" oninput="mascararTaxa(this)"></div>
+            <div class="calc-field"><label>Mês da contemplação</label><span class="hint">Para estimar a taxa equivalente do consórcio e comparar com um financiamento.</span><input type="number" id="cs-contemp" min="1" placeholder="Ex: 24"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Taxa de um financiamento para comparar (% a.m.) <em class="opt">— opcional</em></label><input type="text" inputmode="decimal" id="cs-fin" placeholder="Ex: 1,60" oninput="mascararTaxa(this)"></div>
+            <div class="calc-field"></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcConsorcio()">Calcular</button><button class="calc-btn" onclick="simularConsorcio()">Rodar simulação</button><button class="calc-btn-sec" onclick="limparCalcV13('consorcio')">Limpar</button></div>
+          <div id="cs-res"></div>
+          <div id="cs-sim"></div>
+        </div><!-- /cs-consorcio -->
+
+        <!-- ══ TAXA REAL DO CONTRATO ══ -->
+        <div class="calc-section" id="cs-taxareal">
+          <p class="v13-calc-intro">Descobre a <strong>taxa de juros que o contrato realmente cobra</strong> a partir do valor recebido, da parcela e do número de parcelas. Útil quando o contrato não está disponível ou não mostra a taxa. Não depende do BACEN; depois, a taxa encontrada pode ser comparada na verificação de abusividade.</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor recebido (liberado na conta) — R$ <span class="req">*</span></label><span class="hint">O que efetivamente caiu na conta, sem tarifas e seguros.</span><input type="text" inputmode="decimal" id="tr-valor" placeholder="Ex: 5.000,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Valor da parcela — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="tr-parcela" placeholder="Ex: 230,00" oninput="mascararMoeda(this)"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Número de parcelas <span class="req">*</span></label><input type="number" id="tr-prazo" min="1" placeholder="Ex: 36"></div>
+            <div class="calc-field"><label>Taxa informada no contrato (% a.m.) <em class="opt">— opcional</em></label><input type="text" inputmode="decimal" id="tr-informada" placeholder="Ex: 2,10" oninput="mascararTaxa(this)"></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcTaxaReal()">Descobrir a taxa</button><button class="calc-btn-sec" onclick="limparCalcV13('taxareal')">Limpar</button></div>
+          <div id="tr-res"></div>
+        </div>
+
+        <!-- ══ SIMULAÇÃO DE EMPRÉSTIMO OU FINANCIAMENTO ══ -->
+        <div class="calc-section" id="cs-simula">
+          <p class="v13-calc-intro">Simula parcelas, total pago e juros de um empréstimo ou financiamento com a taxa que você informar, pela <strong>Tabela Price</strong> (parcelas iguais) ou pelo <strong>SAC</strong> (amortização constante), com a tabela de evolução do saldo.</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor financiado — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="si-valor" placeholder="Ex: 20.000,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Número de parcelas <span class="req">*</span></label><input type="number" id="si-prazo" min="1" placeholder="Ex: 48"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Taxa de juros <span class="req">*</span></label><div style="display:grid;grid-template-columns:1fr 110px;gap:8px;"><input type="text" inputmode="decimal" id="si-taxa" placeholder="Ex: 1,99" oninput="mascararTaxa(this)"><select id="si-unid"><option value="am">% a.m.</option><option value="aa">% a.a.</option></select></div></div>
+            <div class="calc-field"><label>Sistema</label><select id="si-sistema"><option value="price">Tabela Price (parcelas iguais)</option><option value="sac">SAC (parcelas decrescentes)</option></select></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcSimulacao()">Simular</button><button class="calc-btn-sec" onclick="limparCalcV13('simula')">Limpar</button></div>
+          <div id="si-res"></div>
+        </div>
+
+        <!-- ══ QUITAÇÃO ANTECIPADA ══ -->
+        <div class="calc-section" id="cs-quitacao">
+          <p class="v13-calc-intro">Calcula o <strong>valor para quitar</strong> (ou antecipar parcelas) com a redução proporcional dos juros (CDC, art. 52, § 2º). Para contratos de pessoa física com taxa prefixada, o valor presente das parcelas é calculado pela <strong>taxa de juros pactuada no contrato</strong> (Resolução CMN 5.004/2022).</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor da parcela — R$ <span class="req">*</span></label><span class="hint">Parcela de juros e amortização, sem seguro mensal à parte.</span><input type="text" inputmode="decimal" id="qa-parcela" placeholder="Ex: 450,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Taxa de juros do contrato (% a.m.) <span class="req">*</span></label><span class="hint">A taxa de juros remuneratórios, não o CET.</span><input type="text" inputmode="decimal" id="qa-taxa" placeholder="Ex: 1,85" oninput="mascararTaxa(this)"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Parcelas que faltam pagar <span class="req">*</span></label><input type="number" id="qa-restantes" min="1" placeholder="Ex: 30"></div>
+            <div class="calc-field"><label>Quantas antecipar <em class="opt">— vazio = quitar tudo</em></label><span class="hint">As últimas parcelas são as antecipadas (reduz o prazo).</span><input type="number" id="qa-antecipar" min="1" placeholder="Ex: 6"></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcQuitacao()">Calcular</button><button class="calc-btn-sec" onclick="limparCalcV13('quitacao')">Limpar</button></div>
+          <div id="qa-res"></div>
+        </div>
+
+        <!-- ══ MARGEM CONSIGNÁVEL ══ -->
+        <div class="calc-section" id="cs-margem">
+          <p class="v13-calc-intro">Confere se os descontos em folha ou no benefício respeitam a <strong>margem consignável</strong>. Os percentuais vêm preenchidos com a regra dos benefícios do INSS (45%: 35% para empréstimos, 5% para cartão de crédito consignado e 5% para cartão consignado de benefício) e podem ser alterados para servidores e empregados, conforme a norma do ente ou do empregador.</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Base de cálculo — R$ <span class="req">*</span></label><span class="hint">Valor do benefício ou remuneração disponível, conforme a norma aplicável.</span><input type="text" inputmode="decimal" id="mg-base" placeholder="Ex: 1.621,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Percentuais (empréstimo · RMC · RCC)</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"><input type="text" inputmode="decimal" id="mg-p-emp" value="35,00" oninput="mascararTaxa(this)" title="Empréstimos"><input type="text" inputmode="decimal" id="mg-p-rmc" value="5,00" oninput="mascararTaxa(this)" title="Cartão de crédito consignado (RMC)"><input type="text" inputmode="decimal" id="mg-p-rcc" value="5,00" oninput="mascararTaxa(this)" title="Cartão consignado de benefício (RCC)"></div></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Soma das parcelas de empréstimos — R$</label><input type="text" inputmode="decimal" id="mg-emp" placeholder="Ex: 520,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Desconto do cartão RMC · do cartão RCC — R$</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input type="text" inputmode="decimal" id="mg-rmc" placeholder="RMC" oninput="mascararMoeda(this)"><input type="text" inputmode="decimal" id="mg-rcc" placeholder="RCC" oninput="mascararMoeda(this)"></div></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcMargem()">Conferir margem</button><button class="calc-btn-sec" onclick="limparCalcV13('margem')">Limpar</button></div>
+          <div id="mg-res"></div>
+        </div>
+
+        <!-- ══ DEVOLUÇÃO DE DESCONTOS INDEVIDOS ══ -->
+        <div class="calc-section" id="cs-indebito">
+          <p class="v13-calc-intro">Soma os <strong>descontos indevidos</strong> e estima a devolução <strong>em dobro</strong> (CDC, art. 42, parágrafo único). Pelo entendimento do STJ (EAREsp 676.608/RS, Corte Especial), a devolução em dobro não depende de má-fé, mas vale para cobranças feitas depois de 30/03/2021; antes disso, a regra é a devolução simples, salvo prova de má-fé. Valores nominais, sem correção monetária e sem juros.</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Valor mensal descontado — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="id-valor" placeholder="Ex: 89,90" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Primeiro e último desconto (mês/ano) <span class="req">*</span></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input type="month" id="id-ini"><input type="month" id="id-fim"></div></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Outros descontos avulsos — R$ e mês/ano <em class="opt">— opcional</em></label><span class="hint">Um por linha, no formato 150,00 05/2022.</span><textarea id="id-avulsos" rows="3" placeholder="150,00 05/2022"></textarea></div>
+            <div class="calc-field"><label>Valores já devolvidos pela instituição — R$ <em class="opt">— opcional</em></label><input type="text" inputmode="decimal" id="id-devolvido" placeholder="Ex: 0,00" oninput="mascararMoeda(this)"></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcIndebito()">Calcular</button><button class="calc-btn-sec" onclick="limparCalcV13('indebito')">Limpar</button></div>
+          <div id="id-res"></div>
+        </div>
+
+        <!-- ══ MÍNIMO EXISTENCIAL (superendividamento) ══ -->
+        <div class="calc-section" id="cs-minimo">
+          <p class="v13-calc-intro">Verifica se as dívidas de consumo do mês comprometem o <strong>mínimo existencial</strong> de <strong>R$ 600,00</strong> por mês (Decreto 11.150/2022, art. 3º, com a redação do Decreto 11.567/2023), usado na Lei 14.181/2021 (superendividamento). O decreto manda não computar algumas dívidas, como o crédito consignado, o financiamento imobiliário e o crédito com garantia real (art. 4º).</p>
+          <div class="calc-row">
+            <div class="calc-field"><label>Renda mensal total — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="me-renda" placeholder="Ex: 2.400,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Parcelas do mês de dívidas de consumo computáveis — R$ <span class="req">*</span></label><span class="hint">Cartão, crediário, empréstimo pessoal, cheque especial usado, contas em atraso de consumo.</span><input type="text" inputmode="decimal" id="me-computaveis" placeholder="Ex: 1.950,00" oninput="mascararMoeda(this)"></div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field"><label>Parcelas não computadas pelo decreto — R$ <em class="opt">— opcional</em></label><span class="hint">Consignado, financiamento imobiliário, crédito com garantia real, fiança ou aval, rural, tributos e condomínio.</span><input type="text" inputmode="decimal" id="me-excluidas" placeholder="Ex: 480,00" oninput="mascararMoeda(this)"></div>
+            <div class="calc-field"><label>Mínimo existencial — R$</label><span class="hint">Valor vigente do decreto; altere só se houver atualização.</span><input type="text" inputmode="decimal" id="me-minimo" value="600,00" oninput="mascararMoeda(this)"></div>
+          </div>
+          <div class="calc-actions"><button class="calc-btn" onclick="calcMinimo()">Verificar</button><button class="calc-btn-sec" onclick="limparCalcV13('minimo')">Limpar</button></div>
+          <div id="me-res"></div>
+        </div>

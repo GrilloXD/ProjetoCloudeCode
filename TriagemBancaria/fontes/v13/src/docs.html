@@ -11,7 +11,8 @@
 
   <!-- ── 1. DADOS DO ATENDIMENTO ─────────────────────────────────── -->
   <div class="doc-card" id="caso-card">
-    <div class="doc-card-hdr"><h3>1. Dados do atendimento</h3><p>Valem para todos os documentos, para a calculadora e para a minuta de e-mail. Só nome e CPF são exigidos para gerar ofícios.</p></div>
+   <details class="doc-acc" id="caso-acc" open><summary class="doc-acc-sum">
+    <div class="doc-card-hdr"><h3>1. Dados do atendimento</h3><p>Valem para todos os documentos, para a calculadora e para a minuta de e-mail. Só nome e CPF são exigidos para gerar ofícios.<span class="v13-acc-resumo" id="caso-acc-resumo"></span></p></div></summary>
     <div class="doc-card-body">
       <div class="v13-grid">
         <div class="c2"><label for="caso-assistido">Nome completo do(a) assistido(a) <span class="req">*</span></label><input type="text" id="caso-assistido" autocomplete="off" placeholder="Ex.: Maria Aparecida dos Santos"></div>
@@ -27,8 +28,8 @@
       <div class="v13-sec">Prioridades e vulnerabilidades</div>
       <div class="v13-grid">
         <div class="c4"><label for="caso-vuln-busca">Condições do(a) assistido(a) <em class="opt">— escolha na lista quantas se aplicarem</em></label>
-          <div class="combo" id="combo-caso-vuln-busca"><input type="text" id="caso-vuln-busca" autocomplete="off" role="combobox" aria-controls="combo-caso-vuln-busca-list" placeholder="Clique ou digite: idosa, deficiência, analfabeta, superendividamento…" oninput="vulnFiltrar()" onfocus="vulnFiltrar()" onclick="vulnFiltrar()" onkeydown="vulnTeclado(event)" onblur="comboBlur('caso-vuln-busca')"><div class="combo-list" id="combo-caso-vuln-busca-list" role="listbox"></div></div>
-          <div class="v13-sel" id="caso-vuln" aria-live="polite"></div></div>
+          <div class="combo" id="combo-caso-vuln-busca"><input type="text" id="caso-vuln-busca" autocomplete="off" role="combobox" aria-controls="combo-caso-vuln-busca-list" placeholder="Clique para abrir a lista ou digite: idosa, deficiência, analfabeta…" oninput="vulnFiltrar()" onfocus="vulnFiltrar()" onclick="vulnFiltrar()" onkeydown="vulnTeclado(event)" onblur="comboBlur('caso-vuln-busca')"><div class="combo-list" id="combo-caso-vuln-busca-list" role="listbox"></div></div>
+          <div class="v13-rol" id="caso-vuln" aria-live="polite"></div></div>
         <div class="c4"><label for="caso-vuln-outra">Outra condição relevante <em class="opt">— opcional, entra no texto como escrita</em></label>
           <input type="text" id="caso-vuln-outra" placeholder="Ex.: pessoa em tratamento de hemodiálise três vezes por semana"></div>
       </div>
@@ -48,6 +49,7 @@
       <div class="v13-sec">Revisão rápida</div>
       <div class="v13-resumo" id="caso-resumo"></div>
     </div>
+   </details>
   </div>
 
   <!-- ── 2. OFÍCIO À INSTITUIÇÃO FINANCEIRA ──────────────────────── -->
@@ -78,7 +80,7 @@
       <div class="v13-sec">Conteúdo do pedido</div>
       <div class="v13-grid">
         <div class="c4"><label for="of-modalidade">Modelo do pedido (tipo de caso)</label><select id="of-modalidade" onchange="ofAplicarModalidade(true)"></select><div class="v13-hint">Vindo da triagem, o modelo já chega escolhido. Tudo abaixo pode ser editado.</div></div>
-        <div class="c4"><label for="of-tema">Assunto do ofício <em class="opt">— frase curta, sem verbo</em></label><input type="text" id="of-tema"><div class="v13-hint">Sai em negrito na linha "Assunto:", como pede o Manual de Redação. Ex.: Conferência de contrato de financiamento de veículo.</div></div>
+        <div class="c4"><label for="of-tema">Assunto do ofício <em class="opt">— frase curta</em></label><input type="text" id="of-tema"><div class="v13-hint">Entra na linha "Assunto:" depois de "Solicitação de informações e documentos", seguido do nome e do CPF. Ex.: Conferência de contrato de financiamento de veículo.</div></div>
         <div class="c4"><label for="of-relato">Relato objetivo da situação</label><textarea id="of-relato" rows="3"></textarea></div>
       </div>
       <div class="v13-sec">Itens solicitados <span class="v13-sec-nota">desmarque o que não se aplica</span></div>
@@ -283,7 +285,7 @@
         <div><label for="un-email">E-mail para respostas</label><input type="text" id="un-email" oninput="unidadePrevia()"></div>
         <div class="c2"><label for="un-site">Site</label><input type="text" id="un-site" oninput="unidadePrevia()"></div>
         <div class="c4"><label for="un-padrao">Padrão de redação dos ofícios e da autorização</label><select id="un-padrao" onchange="unidadePrevia()"></select>
-          <div class="v13-hint">A estrutura segue sempre o padrão ofício do Manual de Redação da Presidência da República (identificação, data, endereçamento, assunto em negrito, parágrafos numerados com recuo de 2,5 cm, fecho e signatário centralizado). Aqui muda só a fonte. Também dá para trocar na tela de revisão do documento.</div></div>
+          <div class="v13-hint">A estrutura é a dos modelos da unidade: "Ofício nº" e data na mesma linha, endereçamento, "Assunto:", vocativo com recuo, parágrafos numerados com linha em branco entre eles, itens a), b) em negrito e assinatura centralizada. Aqui muda só a fonte. Também dá para trocar na tela de revisão do documento.</div></div>
       </div>
       <div class="v13-previa" id="un-previa"></div>
       <div class="doc-actions"><button class="btn-doc-dl" onclick="unidadeSalvar()">Salvar</button><button class="btn-doc-copy" onclick="unidadeRestaurar()">Restaurar padrão</button></div>

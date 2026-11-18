@@ -261,15 +261,40 @@ rep("""abusividade: ['Verificação de Abusividade — BACEN em Tempo Real', '18
   consorcio: ['Consórcio — Parcelas, Custo e Restituição', 'Composição da parcela, custo das taxas e estimativa de restituição ao excluído (Lei 11.795/2008)'],""")
 rep("""        <p>18 modalidades · taxas BACEN em tempo real ou históricas</p>
       </div>
-      <div class="calc-menu-item active" onclick="switchCalc(this,'abusividade')">""", """        <p>22 modalidades · taxas BACEN · consórcio</p>
+      <div class="calc-menu-item active" onclick="switchCalc(this,'abusividade')">""", """        <p>Abusividade com taxas do BACEN e 7 cálculos independentes</p>
       </div>
       <div class="calc-menu-item active" data-calc="abusividade" onclick="switchCalc(this,'abusividade')">""")
 rep("""        <div><div style="font-weight:700">Verificar Abusividade</div><div style="font-size:10px;color:var(--mi)">Consig · Pessoal · Cartão · Veículo · Imóvel · Cheque</div></div>
       </div>""", """        <div><div style="font-weight:700">Verificar Abusividade</div><div style="font-size:10px;color:var(--mi)">Consig · Pessoal · Cartão · Veículo · Imóvel · Cheque</div></div>
       </div>
+      <div class="v13-calc-grupo">Cálculos que não dependem do BACEN</div>
       <div class="calc-menu-item" data-calc="consorcio" onclick="switchCalc(this,'consorcio')">
         <span class="calc-menu-icon">🤝</span>
-        <div><div style="font-weight:700">Consórcio</div><div style="font-size:10px;color:var(--mi)">Parcela · custo das taxas · restituição</div></div>
+        <div><div style="font-weight:700">Consórcio</div><div style="font-size:10px;color:var(--mi)">Parcela · restituição · simulação</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="taxareal" onclick="switchCalc(this,'taxareal')">
+        <span class="calc-menu-icon">🔎</span>
+        <div><div style="font-weight:700">Taxa real do contrato</div><div style="font-size:10px;color:var(--mi)">Pelo valor recebido e pela parcela</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="simula" onclick="switchCalc(this,'simula')">
+        <span class="calc-menu-icon">📈</span>
+        <div><div style="font-weight:700">Simular empréstimo</div><div style="font-size:10px;color:var(--mi)">Price ou SAC · evolução do saldo</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="quitacao" onclick="switchCalc(this,'quitacao')">
+        <span class="calc-menu-icon">💵</span>
+        <div><div style="font-weight:700">Quitação antecipada</div><div style="font-size:10px;color:var(--mi)">Desconto proporcional dos juros</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="margem" onclick="switchCalc(this,'margem')">
+        <span class="calc-menu-icon">📏</span>
+        <div><div style="font-weight:700">Margem consignável</div><div style="font-size:10px;color:var(--mi)">Limites de desconto · INSS 45%</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="indebito" onclick="switchCalc(this,'indebito')">
+        <span class="calc-menu-icon">↩️</span>
+        <div><div style="font-weight:700">Devolução em dobro</div><div style="font-size:10px;color:var(--mi)">Descontos indevidos · art. 42 do CDC</div></div>
+      </div>
+      <div class="calc-menu-item" data-calc="minimo" onclick="switchCalc(this,'minimo')">
+        <span class="calc-menu-icon">🛡️</span>
+        <div><div style="font-weight:700">Mínimo existencial</div><div style="font-size:10px;color:var(--mi)">Superendividamento · R$ 600</div></div>
       </div>""")
 rep("""Verifica se há <strong style="color:var(--rd);">abusividade</strong> em 18 modalidades de crédito""", """Verifica <strong style="color:var(--rd);">indícios de abusividade</strong> em 22 modalidades de crédito""")
 rep("""                  <option value="consig_inss">Empréstimo Consignado — INSS (teto 1,80% a.m.)</option>
@@ -315,28 +340,7 @@ rep("""            <strong>📌 Limites legais:</strong> Consignado INSS <strong
             Para as demais modalidades não há teto legal fixo — a abusividade é aferida pela <strong>Súmula 382 STJ</strong> (taxa muito acima da média de mercado BACEN, com critério usual de 1,5x a 2x).""",
 """            <strong>📌 Tetos:</strong> o consignado INSS e os cartões consignados têm teto que muda com o tempo — a calculadora aplica o do mês da contratação (tabela completa na aba Ajuda). Hoje: empréstimo <strong>1,85%</strong> a.m.; RMC e RCC <strong>2,46%</strong> a.m. Cheque especial: <strong>8%</strong> a.m. desde 06/01/2020 (Res. CMN 4.765/2019). Rotativo do cartão: juros e encargos limitados ao valor original da dívida desde 03/01/2024 (Lei 14.690/2023).
             Nas demais modalidades não há teto fixo: a revisão de juros é excepcional e exige demonstrar discrepância relevante em relação à <strong>taxa média do BACEN</strong> (STJ, REsp 1.061.530/RS; Súmula 382). Os critérios de 1,5x e 2x usados aqui são referências de triagem, não regra legal.""")
-CONS = '''        <!-- ══ CONSÓRCIO (v13) ════════════════════════════════════ -->
-        <div class="calc-section" id="cs-consorcio">
-          <p style="font-size:12.5px;color:var(--mi);margin-bottom:14px;line-height:1.65;">Consórcio não tem juros: o custo está na <strong>taxa de administração</strong>, no <strong>fundo de reserva</strong> e no <strong>seguro</strong>. Este cálculo mostra a composição da parcela, o custo total das taxas e uma <strong>estimativa da restituição</strong> ao consorciado excluído (Lei 11.795/2008, art. 30). Não depende do BACEN.</p>
-          <div class="calc-row">
-            <div class="calc-field"><label>Valor do crédito (carta) — R$ <span class="req">*</span></label><input type="text" inputmode="decimal" id="cs-credito" placeholder="Ex: 60.000,00" oninput="mascararMoeda(this)"></div>
-            <div class="calc-field"><label>Prazo do grupo (meses) <span class="req">*</span></label><input type="number" id="cs-prazo" min="1" placeholder="Ex: 80"></div>
-          </div>
-          <div class="calc-row">
-            <div class="calc-field"><label>Taxa de administração total (%)</label><span class="hint">Percentual sobre o crédito, para todo o plano (contrato).</span><input type="text" inputmode="decimal" id="cs-adm" placeholder="Ex: 16,00" oninput="mascararTaxa(this)"></div>
-            <div class="calc-field"><label>Fundo de reserva total (%)</label><span class="hint">Se houver.</span><input type="text" inputmode="decimal" id="cs-fr" placeholder="Ex: 2,00" oninput="mascararTaxa(this)"></div>
-          </div>
-          <div class="calc-row">
-            <div class="calc-field"><label>Seguro mensal (R$)</label><input type="text" inputmode="decimal" id="cs-seg" placeholder="Ex: 25,00" oninput="mascararMoeda(this)"></div>
-            <div class="calc-field"><label>Parcelas pagas</label><input type="number" id="cs-pagas" min="0" placeholder="Ex: 14"></div>
-          </div>
-          <div class="calc-row">
-            <div class="calc-field"><label>Valor atual do bem de referência (R$) <em class="opt">— opcional</em></label><span class="hint">A restituição usa o valor do bem na data da assembleia; sem ele, usa o crédito informado.</span><input type="text" inputmode="decimal" id="cs-bem-atual" placeholder="Ex: 64.500,00" oninput="mascararMoeda(this)"></div>
-            <div class="calc-field"><label>Cláusula penal prevista (%) <em class="opt">— opcional</em></label><span class="hint">Só se prevista no contrato; costuma exigir prova de prejuízo ao grupo.</span><input type="text" inputmode="decimal" id="cs-multa" placeholder="Ex: 10,00" oninput="mascararTaxa(this)"></div>
-          </div>
-          <div class="calc-actions"><button class="calc-btn" onclick="calcConsorcio()">🧮 Calcular consórcio</button><button class="calc-btn-sec" onclick="limparConsorcio()">↺ Limpar</button></div>
-          <div id="cs-res"></div>
-        </div><!-- /cs-consorcio -->
+CONS = rd('src/calc_extra.html').rstrip() + '''
 
       </div><!-- /calc-body -->'''
 rep("""        </div><!-- /cs-abusividade -->
@@ -348,6 +352,7 @@ rep("""        </div><!-- /cs-abusividade -->
 # ── 9. Aba Documentos: substituída pela versão v13 ────────────────────────
 i0 = s.index('<div class="app-page" id="page-docs">'); i1 = s.index('</div><!-- /page-docs -->') + len('</div><!-- /page-docs -->')
 s = s[:i0] + rd('src/docs.html').strip() + s[i1:]
+rep('<h3>Calculadora de Abusividade</h3>', '<h3>Calculadora</h3>')
 
 # ── 10. Modelos .docx da v12 (substituídos pelo modelo institucional) ──────
 rep("var B64_OFICIO = '__B64_OFICIO__';", "var B64_OFICIO = ''; // v13: substituído pelo modelo institucional (B64_BASE_V13) — ver bloco v13 ao final")
@@ -474,7 +479,7 @@ INSTJ = open(os.path.join(W, 'out/inst_cadastro.json'), encoding='utf-8').read()
 SCRIPTS = ('<script>\n/* v13 — modelo institucional (.docx) usado na geração dos documentos: cabeçalho com o logotipo oficial, estilos e margens do\n   "Modelo de Ofício Institucional DPESP"; o corpo é montado pelo sistema. */\nvar B64_BASE_V13 = \'' + B64BASE + '\';\n'
            + '/* v13 — cadastro de instituições: participantes do BACEN + sede no CNPJ (Receita Federal, consulta de 16/11/2026) + lista curada da v12. */\nvar INST_CADASTRO = ' + INSTJ + ';\n</script>\n'
            + '<script>\n' + rd('src/v13_data.js') + '\n</script>\n<script>\n' + rd('src/v13_docx.js') + '\n</script>\n<script>\n' + rd('src/v13_cenarios.js')
-           + "\n/* Tema 1.061 também nos cenários de contratação não reconhecida */\n['END_inss_fraude_total', 'END_emp_fraude', 'END_conta_emp_fraude', 'END_car_fraude_total'].forEach(function (k) { if (T[k] && T[k].jurisprudencia && !T[k].jurisprudencia.some(function (j) { return /1\\.061/.test(j.ref); })) T[k].jurisprudencia.push(_T1061); });\n</script>\n<script>\n" + rd('src/v13_app.js') + '\n</script>\n')
+           + "\n/* Tema 1.061 também nos cenários de contratação não reconhecida */\n['END_inss_fraude_total', 'END_emp_fraude', 'END_conta_emp_fraude', 'END_car_fraude_total'].forEach(function (k) { if (T[k] && T[k].jurisprudencia && !T[k].jurisprudencia.some(function (j) { return /1\\.061/.test(j.ref); })) T[k].jurisprudencia.push(_T1061); });\n</script>\n<script>\n" + rd('src/v13_app.js') + '\n</script>\n<script>\n' + rd('src/v13_calc.js') + '\n</script>\n')
 rep('</body>\n</html>', SCRIPTS + '</body>\n</html>')
 
 out = os.path.join(W, 'out', 'TriagemDPESP_Financeira_v13.html')
